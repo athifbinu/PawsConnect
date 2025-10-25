@@ -58,7 +58,7 @@ export function Header() {
             )}
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full transition-all duration-500 hover:scale-105 hover:shadow-lg">
               <Heart className="h-4 w-4 mr-2" />
-              Donate Now
+              Admin
             </Button>
           </nav>
 
