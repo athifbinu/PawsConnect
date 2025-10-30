@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Header } from '@/components/Header';
-import { Hero } from '@/components/Hero';
-import { PetGrid } from '@/components/PetGrid';
-import { FilterSidebar } from '@/components/FilterSidebar';
-import { Footer } from '@/components/Footer';
-import { PetDetailModal } from '@/components/PetDetailModal';
-import { AdoptionModal } from '@/components/AdoptionModal';
-import { StatsSection } from '@/components/StatsSection';
-import { TestimonialsSection } from '@/components/TestimonialsSection';
-import { pets } from '@/data/pets';
-import { Pet, FilterState } from '@/types/pet';
+import { useState, useEffect } from "react";
+import { Header } from "@/components/Header";
+import { Hero } from "@/components/Hero";
+import { PetGrid } from "@/components/PetGrid";
+import { FilterSidebar } from "@/components/FilterSidebar";
+import { Footer } from "@/components/Footer";
+import { PetDetailModal } from "@/components/PetDetailModal";
+import { AdoptionModal } from "@/components/AdoptionModal";
+import { StatsSection } from "@/components/StatsSection";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
+import { pets } from "@/data/pets";
+import { Pet, FilterState } from "@/types/pet";
 
 export default function Home() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [showAdoptionModal, setShowAdoptionModal] = useState(false);
   const [adoptionPet, setAdoptionPet] = useState<Pet | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>({
-    type: 'all',
-    age: 'all',
-    size: 'all',
-    location: 'all',
+    type: "all",
+    age: "all",
+    size: "all",
+    location: "all",
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -30,15 +30,23 @@ export default function Home() {
     setIsLoaded(true);
   }, []);
 
-  const filteredPets = pets.filter(pet => {
-    const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         pet.breed.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filters.type === 'all' || pet.type === filters.type;
-    const matchesAge = filters.age === 'all' || pet.age === filters.age;
-    const matchesSize = filters.size === 'all' || pet.size === filters.size;
-    const matchesLocation = filters.location === 'all' || pet.location === filters.location;
+  const filteredPets = pets.filter((pet) => {
+    const matchesSearch =
+      pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pet.breed.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filters.type === "all" || pet.type === filters.type;
+    const matchesAge = filters.age === "all" || pet.age === filters.age;
+    const matchesSize = filters.size === "all" || pet.size === filters.size;
+    const matchesLocation =
+      filters.location === "all" || pet.location === filters.location;
 
-    return matchesSearch && matchesType && matchesAge && matchesSize && matchesLocation;
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesAge &&
+      matchesSize &&
+      matchesLocation
+    );
   });
 
   const handleAdopt = (pet: Pet) => {
@@ -69,12 +77,12 @@ export default function Home() {
       </div>
 
       <Header />
-      
+
       <main className="relative z-10">
         <Hero onSearch={setSearchQuery} />
-        
+
         <StatsSection />
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex flex-col lg:flex-row gap-8">
             <aside className="lg:w-80 flex-shrink-0">
@@ -84,7 +92,7 @@ export default function Home() {
                 resultsCount={filteredPets.length}
               />
             </aside>
-            
+
             <div className="flex-1">
               <PetGrid
                 pets={filteredPets}
