@@ -1,4 +1,3 @@
-import "../globals.css";
 import { AdminHeader } from "./components/AdminHeader";
 import { AdminFooter } from "./components/AdminFooter";
 
