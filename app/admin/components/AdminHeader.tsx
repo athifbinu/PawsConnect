@@ -3,9 +3,31 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { supabase } from "@/supabace/config";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 export function AdminHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+  // ✅ Logout Function
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout failed:", error.message);
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: "Logged Out Successfully 👋",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setTimeout(() => {
+        router.push("/admin/login");
+      }, 1500);
+    }
+  };
 
   return (
     <header className="bg-blue-700 text-white shadow-md sticky top-0 z-50">
@@ -19,15 +41,18 @@ export function AdminHeader() {
           <Link href="/admin/dashboard" className="hover:text-gray-200">
             Dashboard
           </Link>
-          <Link href="/admin/products" className="hover:text-gray-200">
-            Products
+          <Link href="/admin/addpets" className="hover:text-gray-200">
+            Add pets
           </Link>
           <Link href="/admin/users" className="hover:text-gray-200">
             Users
           </Link>
-          <Link href="/logout" className="hover:text-gray-200">
+          <button
+            onClick={handleLogout}
+            className="hover:text-gray-200 focus:outline-none"
+          >
             Logout
-          </Link>
+          </button>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -46,15 +71,18 @@ export function AdminHeader() {
           <Link href="/admin/dashboard" className="block hover:text-gray-200">
             Dashboard
           </Link>
-          <Link href="/admin/products" className="block hover:text-gray-200">
-            Products
+          <Link href="/admin/addpets" className="block hover:text-gray-200">
+            Add Pets
           </Link>
           <Link href="/admin/users" className="block hover:text-gray-200">
             Users
           </Link>
-          <Link href="/logout" className="block hover:text-gray-200">
+          <button
+            onClick={handleLogout}
+            className="block w-full text-left hover:text-gray-200 focus:outline-none"
+          >
             Logout
-          </Link>
+          </button>
         </div>
       )}
     </header>
