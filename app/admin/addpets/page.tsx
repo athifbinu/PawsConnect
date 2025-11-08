@@ -1,7 +1,10 @@
 "use client";
 import React, { useState } from "react";
+import Swal from "sweetalert2";
+import { supabase } from "@/supabace/config";
 
 const AddPet = () => {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     petName: "",
     category: "",
@@ -22,6 +25,7 @@ const AddPet = () => {
     about: "",
   });
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
@@ -31,10 +35,99 @@ const AddPet = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  // Upload image to Supabase storage
+  const uploadImage = async (file) => {
+    if (!file) return null;
+    const fileName = `${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from("pets") // Bucket name
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: publicUrl } = supabase.storage
+      .from("pets")
+      .getPublicUrl(fileName);
+
+    return publicUrl.publicUrl;
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Pet Data Submitted:", formData);
-    alert("Pet added successfully 🐾");
+    setLoading(true);
+
+    try {
+      // Upload images
+      const mainImageUrl = await uploadImage(formData.mainImage);
+      const subImage1Url = await uploadImage(formData.subImage1);
+      const subImage2Url = await uploadImage(formData.subImage2);
+      const subImage3Url = await uploadImage(formData.subImage3);
+
+      // Prepare data to insert
+      const petData = {
+        pet_name: formData.petName,
+        pet_category: formData.category,
+        main_image: mainImageUrl,
+        sub_images: [subImage1Url, subImage2Url, subImage3Url].filter(Boolean),
+        location: formData.location,
+        sex: formData.sex,
+        age_type: formData.ageType,
+        personality: formData.personality,
+        health_status: formData.healthStatus,
+        care: formData.care,
+        owner_contact: formData.ownerContact,
+        owner_email: formData.ownerEmail,
+        adoption_type: formData.adoptionType,
+        price: formData.adoptionType === "Prize" ? formData.price : null,
+        about: formData.about,
+        created_at: new Date(),
+      };
+
+      // Insert into Supabase
+      const { error } = await supabase.from("pets").insert([petData]);
+      if (error) throw error;
+
+      Swal.fire({
+        icon: "success",
+        title: "Pet Added Successfully!",
+        text: `${formData.petName} has been uploaded to the pets list.`,
+        showConfirmButton: false,
+        timer: 2000,
+        background: "#f0fdf4",
+      });
+
+      // Reset form
+      setFormData({
+        petName: "",
+        category: "",
+        mainImage: "",
+        subImage1: "",
+        subImage2: "",
+        subImage3: "",
+        location: "",
+        sex: "",
+        ageType: "",
+        personality: "",
+        healthStatus: "",
+        care: "",
+        ownerContact: "",
+        ownerEmail: "",
+        adoptionType: "",
+        price: "",
+        about: "",
+      });
+    } catch (err) {
+      console.error("Error adding pet:", err.message);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed!",
+        text: err.message || "Something went wrong.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -161,6 +254,9 @@ const AddPet = () => {
                 <option value="">Select</option>
                 <option value="Puppy">Puppy</option>
                 <option value="Adult">Adult</option>
+                <option value="Kitten">Kitten</option>
+                <option value="Large">Large</option>
+                <option value="Small">Small</option>
               </select>
             </div>
             <div>
@@ -256,7 +352,6 @@ const AddPet = () => {
             </select>
           </div>
 
-          {/* Price (only if adoptionType = Prize) */}
           {formData.adoptionType === "Prize" && (
             <div>
               <label className="block font-semibold mb-2">
@@ -286,12 +381,12 @@ const AddPet = () => {
             ></textarea>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-lg transition duration-300"
           >
-            Add Pet
+            {loading ? "Uploading..." : "Add Pet"}
           </button>
         </form>
       </div>
