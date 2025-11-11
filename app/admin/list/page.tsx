@@ -17,6 +17,8 @@ const ListPets = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPet, setSelectedPet] = useState(null);
+  const [editPet, setEditPet] = useState(null); // 🆕 Edit modal state
+  const [formData, setFormData] = useState({});
 
   const fetchPets = async () => {
     try {
@@ -44,22 +46,60 @@ const ListPets = () => {
     const { error } = await supabase.from("pets").delete().eq("id", id);
     if (error) {
       console.error("Error deleting pet:", error);
-      alert("❌ Failed to delete pet");
+      Swal.fire("❌ Failed to delete pet", error.message, "error");
     } else {
-      alert("✅ Pet deleted successfully!");
-      // Update UI instantly
+      Swal.fire("✅ Deleted!", "Pet deleted successfully!", "success");
       setPets((prev) => prev.filter((pet) => pet.id !== id));
     }
   };
 
-  // 🐾 Open modal
-  const handleViewDetails = (pet) => {
-    setSelectedPet(pet);
+  // 🐾 Open details modal
+  const handleViewDetails = (pet) => setSelectedPet(pet);
+
+  // 🐾 Close details modal
+  const closeModal = () => setSelectedPet(null);
+
+  // ✏️ Open edit modal
+  const handleEdit = (pet) => {
+    setEditPet(pet);
+    setFormData({
+      pet_name: pet.pet_name,
+      pet_category: pet.pet_category,
+      location: pet.location,
+      age_type: pet.age_type,
+      health_status: pet.health_status,
+      care: pet.care,
+      owner_contact: pet.owner_contact,
+      owner_email: pet.owner_email,
+      about: pet.about,
+      price: pet.price,
+      adoption_type: pet.adoption_type,
+    });
   };
 
-  // 🐾 Close modal
-  const closeModal = () => {
-    setSelectedPet(null);
+  // ✏️ Handle form input change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 💾 Update pet in Supabase
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from("pets")
+        .update(formData)
+        .eq("id", editPet.id);
+
+      if (error) throw error;
+
+      Swal.fire("✅ Success!", "Pet updated successfully!", "success");
+      setEditPet(null);
+      fetchPets(); // Refresh list
+    } catch (err) {
+      Swal.fire("❌ Error updating pet", err.message, "error");
+    }
   };
 
   return (
@@ -91,6 +131,12 @@ const ListPets = () => {
                   className="w-full h-56 object-cover"
                 />
                 <div className="absolute top-3 right-3 flex gap-2">
+                  <button
+                    onClick={() => handleEdit(pet)}
+                    className="bg-white/90 hover:bg-blue-100 p-2 rounded-full transition"
+                  >
+                    <Edit3 className="w-4 h-4 text-blue-600" />
+                  </button>
                   <button
                     onClick={() => handleDelete(pet.id)}
                     className="bg-white/90 hover:bg-red-100 p-2 rounded-full transition"
@@ -141,7 +187,7 @@ const ListPets = () => {
         </div>
       )}
 
-      {/* 🐶 Modal Section */}
+      {/* 🐶 View Details Modal */}
       <AnimatePresence>
         {selectedPet && (
           <motion.div
@@ -215,6 +261,87 @@ const ListPets = () => {
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ✏️ Edit Pet Modal */}
+      <AnimatePresence>
+        {editPet && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setEditPet(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative"
+            >
+              <button
+                onClick={() => setEditPet(null)}
+                className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+
+              <h2 className="text-2xl font-bold text-pink-600 mb-5 text-center">
+                ✏️ Edit Pet
+              </h2>
+
+              <form onSubmit={handleUpdate} className="space-y-4">
+                {[
+                  "pet_name",
+                  "pet_category",
+                  "location",
+                  "age_type",
+                  "health_status",
+                  "care",
+                  "owner_contact",
+                  "owner_email",
+                  "price",
+                  "adoption_type",
+                ].map((field) => (
+                  <input
+                    key={field}
+                    type="text"
+                    name={field}
+                    value={formData[field] || ""}
+                    onChange={handleChange}
+                    placeholder={field.replace("_", " ").toUpperCase()}
+                    className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400"
+                  />
+                ))}
+
+                <textarea
+                  name="about"
+                  value={formData.about || ""}
+                  onChange={handleChange}
+                  placeholder="About the pet"
+                  className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400"
+                />
+
+                <div className="flex justify-end gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditPet(null)}
+                    className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
+                  >
+                    Update
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
