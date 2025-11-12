@@ -17,7 +17,7 @@ const ListPets = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPet, setSelectedPet] = useState(null);
-  const [editPet, setEditPet] = useState(null); // 🆕 Edit modal state
+  const [editPet, setEditPet] = useState(null);
   const [formData, setFormData] = useState({});
 
   const fetchPets = async () => {
@@ -42,10 +42,8 @@ const ListPets = () => {
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this pet?")) return;
-
     const { error } = await supabase.from("pets").delete().eq("id", id);
     if (error) {
-      console.error("Error deleting pet:", error);
       Swal.fire("❌ Failed to delete pet", error.message, "error");
     } else {
       Swal.fire("✅ Deleted!", "Pet deleted successfully!", "success");
@@ -53,13 +51,9 @@ const ListPets = () => {
     }
   };
 
-  // 🐾 Open details modal
   const handleViewDetails = (pet) => setSelectedPet(pet);
-
-  // 🐾 Close details modal
   const closeModal = () => setSelectedPet(null);
 
-  // ✏️ Open edit modal
   const handleEdit = (pet) => {
     setEditPet(pet);
     setFormData({
@@ -77,13 +71,11 @@ const ListPets = () => {
     });
   };
 
-  // ✏️ Handle form input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 💾 Update pet in Supabase
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
@@ -93,10 +85,9 @@ const ListPets = () => {
         .eq("id", editPet.id);
 
       if (error) throw error;
-
       Swal.fire("✅ Success!", "Pet updated successfully!", "success");
       setEditPet(null);
-      fetchPets(); // Refresh list
+      fetchPets();
     } catch (err) {
       Swal.fire("❌ Error updating pet", err.message, "error");
     }
@@ -104,7 +95,7 @@ const ListPets = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-6">
-      <h1 className="text-4xl font-bold text-center text-pink-600 mb-10">
+      <h1 className="text-4xl font-bold text-center text-pink-600 mb-10 drop-shadow-sm">
         🐾 Pet Management Dashboard
       </h1>
 
@@ -154,6 +145,7 @@ const ListPets = () => {
                   <MapPin className="w-4 h-4 mr-1 text-pink-400" />
                   {pet.location || "Unknown"}
                 </div>
+
                 <div className="flex justify-between items-center mb-3">
                   <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-medium">
                     {pet.pet_category}
@@ -194,7 +186,7 @@ const ListPets = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={closeModal}
           >
             <motion.div
@@ -217,23 +209,20 @@ const ListPets = () => {
                 className="w-full h-64 object-cover"
               />
 
-              <div className="p-6">
+              <div className="p-6 space-y-3">
                 <h2 className="text-2xl font-bold text-pink-600 mb-2">
                   {selectedPet.pet_name}
                 </h2>
-                <p className="text-gray-600 mb-3">
+                <p className="text-gray-600">
                   {selectedPet.about || "No details available."}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3 text-gray-700">
+                <div className="grid grid-cols-2 gap-3 text-gray-700 text-sm">
                   <p>
                     <b>Category:</b> {selectedPet.pet_category}
                   </p>
                   <p>
                     <b>Location:</b> {selectedPet.location}
-                  </p>
-                  <p>
-                    <b>Sex:</b> {selectedPet.sex}
                   </p>
                   <p>
                     <b>Age:</b> {selectedPet.age_type}
@@ -245,14 +234,14 @@ const ListPets = () => {
                     <b>Care:</b> {selectedPet.care}
                   </p>
                   <p>
-                    <b>Owner:</b> {selectedPet.owner_contact}
+                    <b>Contact:</b> {selectedPet.owner_contact}
                   </p>
                   <p>
                     <b>Email:</b> {selectedPet.owner_email}
                   </p>
                 </div>
 
-                <div className="mt-4 flex justify-end">
+                <div className="flex justify-end pt-4">
                   <button
                     onClick={closeModal}
                     className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
@@ -273,15 +262,15 @@ const ListPets = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setEditPet(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative"
+              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setEditPet(null)}
@@ -294,7 +283,7 @@ const ListPets = () => {
                 ✏️ Edit Pet
               </h2>
 
-              <form onSubmit={handleUpdate} className="space-y-4">
+              <form onSubmit={handleUpdate} className="space-y-4 pb-6">
                 {[
                   "pet_name",
                   "pet_category",
@@ -307,30 +296,38 @@ const ListPets = () => {
                   "price",
                   "adoption_type",
                 ].map((field) => (
-                  <input
-                    key={field}
-                    type="text"
-                    name={field}
-                    value={formData[field] || ""}
-                    onChange={handleChange}
-                    placeholder={field.replace("_", " ").toUpperCase()}
-                    className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400"
-                  />
+                  <div key={field}>
+                    <label className="text-gray-600 text-sm font-medium block mb-1">
+                      {field.replace("_", " ").toUpperCase()}
+                    </label>
+                    <input
+                      type="text"
+                      name={field}
+                      value={formData[field] || ""}
+                      onChange={handleChange}
+                      className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none"
+                    />
+                  </div>
                 ))}
 
-                <textarea
-                  name="about"
-                  value={formData.about || ""}
-                  onChange={handleChange}
-                  placeholder="About the pet"
-                  className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400"
-                />
+                <div>
+                  <label className="text-gray-600 text-sm font-medium block mb-1">
+                    ABOUT
+                  </label>
+                  <textarea
+                    name="about"
+                    value={formData.about || ""}
+                    onChange={handleChange}
+                    rows="3"
+                    className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none"
+                  />
+                </div>
 
                 <div className="flex justify-end gap-3 mt-4">
                   <button
                     type="button"
                     onClick={() => setEditPet(null)}
-                    className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg"
+                    className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition"
                   >
                     Cancel
                   </button>
