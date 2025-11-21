@@ -1,5 +1,6 @@
 // 🐾 Pet interface
 export interface Pet {
+  adoptionFee: ReactNode;
   id: string;
   pet_name: string;
   pet_category:
