@@ -51,7 +51,7 @@ export function PetCard({ pet, onClick }: PetCardProps) {
 
       {/* Name + Type */}
       <h3 className="text-xl font-semibold">{pet.pet_name}</h3>
-      <p className="text-gray-500 capitalize">{pet.type}</p>
+      <p className="text-gray-500 capitalize">{pet.age_type}</p>
 
       {/* Location */}
       <div className="flex items-center text-gray-600 text-sm mt-2">
@@ -59,13 +59,27 @@ export function PetCard({ pet, onClick }: PetCardProps) {
         {pet.location || "Unknown Location"}
       </div>
 
-      {/* Personality Tags */}
       <div className="flex flex-wrap gap-2 mt-3">
         {personalityList.slice(0, 3).map((trait: string) => (
           <Badge key={trait} variant="secondary" className="text-xs px-2 py-1">
             {trait}
           </Badge>
         ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-3">
+        {pet.vacsination
+          ? [pet.vacsination].map((item: string) => (
+              <Badge
+                key={item}
+                variant="secondary"
+                className="text-xs px-3 py-1 rounded-full 
+          bg-gradient-to-r from-green-400 to-emerald-600 text-white shadow-md"
+              >
+                {item}
+              </Badge>
+            ))
+          : null}
       </div>
 
       {/* Adopt Button */}

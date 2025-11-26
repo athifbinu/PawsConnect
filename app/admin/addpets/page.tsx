@@ -17,7 +17,7 @@ const AddPet = () => {
     ageType: "",
     personality: "",
     healthStatus: "",
-    care: "",
+    vacsination: "",
     ownerContact: "",
     ownerEmail: "",
     adoptionType: "",
@@ -75,7 +75,7 @@ const AddPet = () => {
         age_type: formData.ageType,
         personality: formData.personality,
         health_status: formData.healthStatus,
-        care: formData.care,
+        vacsination: formData.vacsination,
         owner_contact: formData.ownerContact,
         owner_email: formData.ownerEmail,
         adoption_type: formData.adoptionType,
@@ -110,7 +110,7 @@ const AddPet = () => {
         ageType: "",
         personality: "",
         healthStatus: "",
-        care: "",
+        vacsination: "",
         ownerContact: "",
         ownerEmail: "",
         adoptionType: "",
@@ -294,17 +294,18 @@ const AddPet = () => {
               </select>
             </div>
             <div>
-              <label className="block font-semibold mb-2">
-                Health & Care Details
-              </label>
-              <input
-                type="text"
-                name="care"
-                value={formData.care}
+              <label className="block font-semibold mb-2">Vaccination</label>
+              <select
+                name="vacsination"
+                value={formData.vacsination}
                 onChange={handleChange}
-                placeholder="Eg. Vaccinated, Dewormed..."
+                required
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-400"
-              />
+              >
+                <option value="">Select</option>
+                <option value="Vaccinated">Vaccinated</option>
+                <option value="Not Vaccinated">Not Vaccinated</option>
+              </select>
             </div>
           </div>
 
