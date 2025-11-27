@@ -44,8 +44,8 @@ export function AdminHeader() {
           <Link href="/admin/addpets" className="hover:text-gray-200">
             Add pets
           </Link>
-          <Link href="/admin/users" className="hover:text-gray-200">
-            Users
+          <Link href="/admin/list" className="hover:text-gray-200">
+            List
           </Link>
           <button
             onClick={handleLogout}
@@ -74,8 +74,8 @@ export function AdminHeader() {
           <Link href="/admin/addpets" className="block hover:text-gray-200">
             Add Pets
           </Link>
-          <Link href="/admin/users" className="block hover:text-gray-200">
-            Users
+          <Link href="/admin/list" className="block hover:text-gray-200">
+            List
           </Link>
           <button
             onClick={handleLogout}
