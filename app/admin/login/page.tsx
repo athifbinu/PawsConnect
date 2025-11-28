@@ -13,11 +13,11 @@ export default function AdminLogin() {
 
   const [error, setError] = useState("");
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e: { preventDefault: () => void }) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -28,7 +28,16 @@ export default function AdminLogin() {
 
     if (error) return setError(error.message);
 
-    router.push("/admin/dashboard"); // Redirect after successful login
+    router.push("/admin/dashboard");
+  };
+
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "http://localhost:3000/admin/auth/callback",
+      },
+    });
   };
 
   return (
@@ -70,6 +79,21 @@ export default function AdminLogin() {
             Login
           </button>
         </form>
+
+        {/* Google Login Button */}
+        <div className="mt-6">
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full bg-white/90 text-gray-800 py-3 rounded-xl font-semibold shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="google"
+              className="w-6 h-6"
+            />
+            Login with Google
+          </button>
+        </div>
 
         <p className="text-center mt-4 text-white/90 text-sm">
           Don&apos;t have an account?{" "}
