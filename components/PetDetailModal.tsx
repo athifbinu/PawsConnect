@@ -166,14 +166,16 @@ export function PetDetailModal({
                 <Badge className={getEnergyColor(pet.energyLevel)}>
                   {pet.health_status}
                 </Badge>
+
+                <Badge className="bg-green-100 text-green-700">
+                  {pet.vacsination}
+                </Badge>
               </div>
 
               <div className="flex items-center gap-2 text-gray-600 mb-4">
                 <MapPin className="h-4 w-4" />
                 <span>{pet.location}</span>
               </div>
-
-              <p className="text-gray-700">{pet.description}</p>
             </div>
 
             <Separator />
@@ -192,55 +194,48 @@ export function PetDetailModal({
 
             <Separator />
 
-            {/* Health */}
-            <div>
-              <h3 className="font-semibold mb-3">Health & Care</h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2">
-                  {pet.vaccinated ? (
-                    <Check className="text-green-500" />
-                  ) : (
-                    <X className="text-red-500" />
-                  )}
-                  <span>Vaccinated</span>
+            {/* about us */}
+            {/* ABOUT SECTION */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">
+                About {pet.pet_name}
+              </h3>
+
+              <p className="text-gray-700 leading-relaxed mb-4">{pet.about}</p>
+
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-gray-600">Health Status</p>
+                  <p className="text-base font-semibold text-orange-700">
+                    {pet.health_status}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {pet.spayedNeutered ? (
-                    <Check className="text-green-500" />
-                  ) : (
-                    <X className="text-red-500" />
-                  )}
-                  <span>Spayed/Neutered</span>
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-gray-600">Vaccinated</p>
+                  <p className="text-base font-semibold text-green-700">
+                    {pet.vacsination}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {pet.houseTrained ? (
-                    <Check className="text-green-500" />
-                  ) : (
-                    <X className="text-red-500" />
-                  )}
-                  <span>House Trained</span>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-gray-600">Size</p>
+                  <p className="text-base font-semibold text-blue-700 capitalize">
+                    {pet.age_type}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {pet.goodWithKids ? (
-                    <Check className="text-green-500" />
-                  ) : (
-                    <X className="text-red-500" />
-                  )}
-                  <span>Good with Kids</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {pet.goodWithPets ? (
-                    <Check className="text-green-500" />
-                  ) : (
-                    <X className="text-red-500" />
-                  )}
-                  <span>Good with Pets</span>
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-gray-600">Gender</p>
+                  <p className="text-base font-semibold text-purple-700 capitalize">
+                    {pet.sex}
+                  </p>
                 </div>
               </div>
+
+              <p className="text-gray-700 leading-relaxed mt-4">
+                {pet.description}
+              </p>
             </div>
 
             <Separator />
