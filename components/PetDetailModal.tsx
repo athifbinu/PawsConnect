@@ -10,38 +10,23 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, MapPin, Calendar, Check, X, Star } from "lucide-react";
+import { Heart, MapPin, Calendar, Star } from "lucide-react";
 import { useState } from "react";
 
-interface PetDetailModalProps {
-  pet: Pet;
-  isOpen: boolean;
-  onClose: () => void;
-  onAdopt: (pet: Pet) => void;
-}
-
-export function PetDetailModal({
-  pet,
-  isOpen,
-  onClose,
-  onAdopt,
-}: PetDetailModalProps) {
+export function PetDetailModal({ pet, isOpen, onClose }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // ✅ FIXED: Use correct fields (main_image + sub_images)
   const images = [pet.main_image, ...(pet.sub_images || [])].filter(Boolean);
-
   if (images.length === 0) images.push("/placeholder-pet.jpg");
 
-  // Safe personality
   const personalityArray = Array.isArray(pet.personality)
     ? pet.personality
     : typeof pet.personality === "string"
     ? pet.personality.split(",").map((p) => p.trim())
     : [];
 
-  const getAgeLabel = (age: string) => {
+  const getAgeLabel = (age) => {
     switch (age) {
       case "puppy":
         return "Puppy";
@@ -56,7 +41,7 @@ export function PetDetailModal({
     }
   };
 
-  const getEnergyColor = (level: string) => {
+  const getEnergyColor = (level) => {
     switch (level) {
       case "low":
         return "bg-blue-100 text-blue-800";
@@ -69,18 +54,86 @@ export function PetDetailModal({
     }
   };
 
+  /*  
+  =================================================================
+    🚀 RAZORPAY PAYMENT FUNCTION
+  =================================================================
+  */
+  const handlePayment = async () => {
+    try {
+      // 1️⃣ Create order in backend
+      const orderRes = await fetch("/api/razorpay/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: pet.adoptionFee,
+          petId: pet.id,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderData.success) {
+        alert("Order Generation Failed!");
+        return;
+      }
+
+      // 2️⃣ Open Razorpay popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "PawsConnect",
+        description: `Adoption Fee for ${pet.pet_name}`,
+        order_id: orderData.orderId,
+
+        handler: async function (response) {
+          // 3️⃣ Verify payment backend
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...response,
+              petId: pet.id,
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+
+          if (verifyData.success) {
+            window.location.href = "/adopt/success";
+          } else {
+            alert("Payment Verification Failed!");
+          }
+        },
+
+        prefill: {
+          name: "User",
+          email: "user@example.com",
+        },
+
+        theme: {
+          color: "#f97316",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto animate-zoomIn">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
-              {/* ✅ CORRECT: pet.pet_name */}
               <DialogTitle className="text-2xl font-bold text-gray-900">
                 {pet.pet_name}
               </DialogTitle>
-
-              {/* ✅ CORRECT: pet.pet_category */}
               <p className="text-lg text-gray-600 mt-1">{pet.pet_category}</p>
             </div>
 
@@ -98,9 +151,9 @@ export function PetDetailModal({
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* ===============================
-                 IMAGE GALLERY
-          =============================== */}
+          {/* ---------------------------------------------------
+                  IMAGE GALLERY
+          --------------------------------------------------- */}
           <div className="space-y-4">
             <div className="relative">
               <img
@@ -143,11 +196,10 @@ export function PetDetailModal({
             )}
           </div>
 
-          {/* ===============================
+          {/* ---------------------------------------------------
                 PET DETAILS
-          =============================== */}
+          --------------------------------------------------- */}
           <div className="space-y-6">
-            {/* Badges */}
             <div>
               <div className="flex items-center gap-4 mb-3">
                 <Badge className="flex items-center gap-1">
@@ -194,8 +246,7 @@ export function PetDetailModal({
 
             <Separator />
 
-            {/* about us */}
-            {/* ABOUT SECTION */}
+            {/* About Section */}
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-xl font-semibold mb-3 text-gray-800">
                 About {pet.pet_name}
@@ -253,7 +304,7 @@ export function PetDetailModal({
               </div>
 
               <Button
-                onClick={() => onAdopt(pet)}
+                onClick={handlePayment}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-lg"
               >
                 Start Adoption Process
