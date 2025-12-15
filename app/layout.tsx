@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const poppins = Poppins({
@@ -11,8 +12,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "PawsConnect - Find Your Perfect Pet Companion",
-  description:
-    "Discover loving pets waiting for their forever homes. Connect with adorable dogs, cats, and more through our beautiful adoption platform.",
+  description: "Discover loving pets waiting for their forever homes.",
 };
 
 export default function RootLayout({
@@ -21,11 +21,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en">
       <body
         className={`${inter.variable} ${poppins.variable} font-inter antialiased`}
       >
         {children}
+
+        {/* ✅ Razorpay script MUST be here */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="beforeInteractive"
+        />
       </body>
     </html>
   );

@@ -304,7 +304,10 @@ export function PetDetailModal({ pet, isOpen, onClose }) {
               </div>
 
               <Button
-                onClick={handlePayment}
+                onClick={() => {
+                  // navigate to checkout page with pet id
+                  window.location.href = `/adopt/checkout?petId=${pet.id}`;
+                }}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-lg"
               >
                 Start Adoption Process
