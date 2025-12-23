@@ -18,72 +18,46 @@ export default function CheckoutPage() {
     landmark: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handlePayment = async () => {
+    if (!petId) {
+      alert("Pet ID missing");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // 1️⃣ Save form to Supabase
-      const { error } = await supabase.from("adoption_requests").insert([
-        {
-          pet_id: petId,
-          ...form,
-        },
-      ]);
+      /* SAVE ADOPTION DATA */
+      const { data: adoption, error } = await supabase
+        .from("adoption_requests")
+        .insert([{ pet_id: petId, ...form }])
+        .select("id")
+        .single();
 
-      if (error) {
-        alert("Failed to save adoption details");
-        console.error(error);
-        setLoading(false);
+      if (error || !adoption) {
+        alert("Failed to save adoption");
         return;
       }
 
-      // 2️⃣ Create Razorpay order
-      const res = await fetch("/api/razorpay/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ petId }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        alert(data.message || "Order creation failed");
-        setLoading(false);
-        return;
-      }
-
-      // 3️⃣ Razorpay popup
+      /* RAZORPAY ORDER (TEST) */
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
+        amount: 50000,
         currency: "INR",
-        name: "PawsConnect (Test)",
-        description: "Pet Adoption Fee",
-        order_id: data.orderId,
+        name: "Pet Adoption",
+        description: "Adoption Fee",
 
-        handler: function () {
-          window.location.href = "/adopt/success";
-        },
-
-        prefill: {
-          name: form.full_name,
-          email: form.email,
-          contact: form.phone,
-        },
-
-        theme: {
-          color: "#f97316",
+        handler: () => {
+          window.location.href = `/adopt/success?adoptionId=${adoption.id}`;
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      new (window as any).Razorpay(options).open();
     } catch (err) {
-      console.error(err);
       alert("Something went wrong");
     } finally {
       setLoading(false);
@@ -91,63 +65,28 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-center mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">
           Adoption Details
         </h1>
 
-        <div className="space-y-4">
+        {Object.keys(form).map((key) => (
           <input
-            name="full_name"
-            placeholder="Full Name"
+            key={key}
+            name={key}
+            placeholder={key.replace("_", " ").toUpperCase()}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-full border p-3 rounded-lg mb-3"
           />
-
-          <input
-            name="email"
-            type="email"
-            placeholder="Email Address"
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          />
-
-          <input
-            name="phone"
-            placeholder="Contact Number"
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          />
-
-          <input
-            name="state"
-            placeholder="State"
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          />
-
-          <input
-            name="location"
-            placeholder="Location"
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          />
-
-          <input
-            name="landmark"
-            placeholder="Nearby Landmark"
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          />
-        </div>
+        ))}
 
         <button
           onClick={handlePayment}
           disabled={loading}
-          className="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold disabled:opacity-60"
+          className="w-full bg-orange-500 text-white py-3 rounded-lg"
         >
-          {loading ? "Processing..." : "Pay Adoption Fee (Test)"}
+          {loading ? "Processing..." : "Pay & Adopt"}
         </button>
       </div>
     </div>
