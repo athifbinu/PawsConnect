@@ -4,7 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabace/config";
 import Image from "next/image";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, PawPrint, MapPin, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function AdoptionSuccessPage() {
   const params = useSearchParams();
@@ -18,21 +19,19 @@ export default function AdoptionSuccessPage() {
     if (!adoptionId) return;
 
     const fetchData = async () => {
-      /* 1️⃣ Get adoption details */
-      const { data: adoptionData, error: adoptionError } = await supabase
+      const { data: adoptionData } = await supabase
         .from("adoption_requests")
         .select("*")
         .eq("id", adoptionId)
         .single();
 
-      if (adoptionError || !adoptionData) {
+      if (!adoptionData) {
         setLoading(false);
         return;
       }
 
       setAdoption(adoptionData);
 
-      /* 2️⃣ Get pet details */
       const { data: petData } = await supabase
         .from("pets")
         .select("*")
@@ -63,49 +62,111 @@ export default function AdoptionSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center px-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-8">
-        {/* SUCCESS HEADER */}
-        <div className="text-center mb-6">
-          <CheckCircle className="mx-auto h-14 w-14 text-green-500" />
-          <h1 className="text-2xl font-bold mt-2">Adoption Successful</h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center px-4 py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative max-w-4xl w-full"
+      >
+        {/* Animated Gradient Border */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 animate-pulse blur-xl opacity-90" />
 
-        {/* PET INFO */}
-        <div className="flex gap-5 items-center border p-4 rounded-xl mb-6">
-          <Image
-            src={pet.main_image}
-            alt={pet.pet_name}
-            width={140}
-            height={140}
-            className="rounded-lg"
-          />
-          <div>
-            <h2 className="text-xl font-semibold">{pet.pet_name}</h2>
-            <p className="text-gray-600">{pet.location}</p>
-          </div>
-        </div>
-
-        {/* DETAILS */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Your Details</h3>
-            <p>Name: {adoption.full_name}</p>
-            <p>Email: {adoption.email}</p>
-            <p>Phone: {adoption.phone}</p>
+        <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+            <h1 className="text-3xl font-bold mt-3">Adoption Confirmed 🎉</h1>
+            <p className="text-gray-600 mt-2">
+              You’ve taken the first step toward a lifelong friendship.
+            </p>
           </div>
 
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Owner Contact</h3>
-            <p>Email: {pet.owner_email}</p>
-            <p>Phone: {pet.owner_contact}</p>
-          </div>
-        </div>
+          {/* Pet Card */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="flex flex-col md:flex-row gap-6 items-center border border-gray-200 rounded-2xl p-6 mb-8 bg-white shadow-lg"
+          >
+            <div className="relative">
+              <Image
+                src={pet.main_image}
+                alt={pet.pet_name}
+                width={180}
+                height={180}
+                className="rounded-xl object-cover shadow-md"
+              />
+              <Heart className="absolute -top-3 -right-3 bg-white rounded-full p-1 text-pink-500 shadow" />
+            </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          We will contact you if verification is needed.
-        </p>
-      </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <PawPrint className="text-indigo-500" />
+                {pet.pet_name}
+              </h2>
+              <p className="text-gray-500 flex items-center gap-1 mt-1">
+                <MapPin size={16} />
+                {pet.location}
+              </p>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-sm">
+                <Detail label="Category" value={pet.pet_category} />
+                <Detail label="Age" value={pet.age_type} />
+                <Detail label="Gender" value={pet.sex} />
+                <Detail label="Health" value={pet.health_status} />
+                <Detail label="Vaccination" value={pet.vaccination} />
+                <Detail label="Personality" value={pet.personality} />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* User & Owner Details */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <InfoBox title="Your Details">
+              <p>Name: {adoption.full_name}</p>
+              <p>Email: {adoption.email}</p>
+              <p>Phone: {adoption.phone}</p>
+            </InfoBox>
+
+            <InfoBox title="Owner Contact">
+              <p>Email: {pet.owner_email}</p>
+              <p>Phone: {pet.owner_contact}</p>
+            </InfoBox>
+          </div>
+
+          <p className="text-center text-sm text-gray-500 mt-8">
+            Our team will contact you shortly for the next steps.
+          </p>
+        </div>
+      </motion.div>
     </div>
+  );
+}
+
+/* ---------- Small Components ---------- */
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-gray-50 border rounded-lg px-3 py-2 text-center">
+      <p className="text-gray-400 text-xs">{label}</p>
+      <p className="font-medium text-gray-700">{value || "—"}</p>
+    </div>
+  );
+}
+
+function InfoBox({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      whileHover={{ y: -3 }}
+      className="bg-white border rounded-xl p-5 shadow-md"
+    >
+      <h3 className="font-semibold mb-3 text-lg">{title}</h3>
+      <div className="text-gray-600 text-sm space-y-1">{children}</div>
+    </motion.div>
   );
 }
