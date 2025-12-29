@@ -4,7 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabace/config";
 import Image from "next/image";
-import { CheckCircle, PawPrint, MapPin, Heart } from "lucide-react";
+import {
+  CheckCircle,
+  PawPrint,
+  MapPin,
+  Heart,
+  MessageCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function AdoptionSuccessPage() {
@@ -61,6 +67,31 @@ export default function AdoptionSuccessPage() {
     );
   }
 
+  /* 📲 WHATSAPP MESSAGE */
+  const whatsappMessage = encodeURIComponent(`
+Hello,
+
+I have successfully adopted *${pet.pet_name}* 🐾
+
+Pet Details:
+• Name: ${pet.pet_name}
+• Category: ${pet.pet_category}
+• Age: ${pet.age_type}
+• Gender: ${pet.sex}
+• Health: ${pet.health_status}
+• Vaccination: ${pet.vaccination}
+• Location: ${pet.location}
+
+Adopter Details:
+• Name: ${adoption.full_name}
+• Phone: ${adoption.phone}
+
+Please guide me with the next steps.
+Thank you!
+`);
+
+  const whatsappNumber = `91${pet.owner_contact}`; // Change country code if needed
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center px-4 py-10">
       <motion.div
@@ -69,11 +100,10 @@ export default function AdoptionSuccessPage() {
         transition={{ duration: 0.6 }}
         className="relative max-w-4xl w-full"
       >
-        {/* Animated Gradient Border */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 animate-pulse blur-xl opacity-90" />
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 blur-xl opacity-90" />
 
         <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8">
-          {/* Header */}
+          {/* HEADER */}
           <div className="text-center mb-8">
             <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
             <h1 className="text-3xl font-bold mt-3">Adoption Confirmed 🎉</h1>
@@ -82,10 +112,10 @@ export default function AdoptionSuccessPage() {
             </p>
           </div>
 
-          {/* Pet Card */}
+          {/* PET CARD */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="flex flex-col md:flex-row gap-6 items-center border border-gray-200 rounded-2xl p-6 mb-8 bg-white shadow-lg"
+            className="flex flex-col md:flex-row gap-6 items-center border rounded-2xl p-6 mb-8 bg-white shadow-lg"
           >
             <div className="relative">
               <Image
@@ -103,6 +133,7 @@ export default function AdoptionSuccessPage() {
                 <PawPrint className="text-indigo-500" />
                 {pet.pet_name}
               </h2>
+
               <p className="text-gray-500 flex items-center gap-1 mt-1">
                 <MapPin size={16} />
                 {pet.location}
@@ -119,7 +150,7 @@ export default function AdoptionSuccessPage() {
             </div>
           </motion.div>
 
-          {/* User & Owner Details */}
+          {/* DETAILS */}
           <div className="grid md:grid-cols-2 gap-6">
             <InfoBox title="Your Details">
               <p>Name: {adoption.full_name}</p>
@@ -130,6 +161,18 @@ export default function AdoptionSuccessPage() {
             <InfoBox title="Owner Contact">
               <p>Email: {pet.owner_email}</p>
               <p>Phone: {pet.owner_contact}</p>
+
+              {pet.owner_contact && (
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+                >
+                  <MessageCircle size={18} />
+                  Chat on WhatsApp
+                </a>
+              )}
             </InfoBox>
           </div>
 
@@ -142,7 +185,7 @@ export default function AdoptionSuccessPage() {
   );
 }
 
-/* ---------- Small Components ---------- */
+/* ---------- COMPONENTS ---------- */
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
