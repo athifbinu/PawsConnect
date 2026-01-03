@@ -2,14 +2,23 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "@/supabace/config";
+import { supabase } from "../../../supabace/config"; // ✅ check spelling
+
+type FormState = {
+  full_name: string;
+  email: string;
+  phone: string;
+  state: string;
+  location: string;
+  landmark: string;
+};
 
 export default function CheckoutPage() {
   const params = useSearchParams();
   const petId = params.get("petId");
 
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     full_name: "",
     email: "",
     phone: "",
@@ -18,8 +27,10 @@ export default function CheckoutPage() {
     landmark: "",
   });
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // ✅ Properly typed change handler
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePayment = async () => {
@@ -31,7 +42,7 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
 
-      /* SAVE ADOPTION DATA */
+      // Save adoption data
       const { data: adoption, error } = await supabase
         .from("adoption_requests")
         .insert([{ pet_id: petId, ...form }])
@@ -43,21 +54,26 @@ export default function CheckoutPage() {
         return;
       }
 
-      /* RAZORPAY ORDER (TEST) */
+      // Razorpay options
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: 50000,
         currency: "INR",
         name: "Pet Adoption",
         description: "Adoption Fee",
-
         handler: () => {
           window.location.href = `/adopt/success?adoptionId=${adoption.id}`;
         },
       };
 
-      new (window as any).Razorpay(options).open();
+      // ✅ Browser safety
+      if (typeof window !== "undefined" && (window as any).Razorpay) {
+        new (window as any).Razorpay(options).open();
+      } else {
+        alert("Razorpay not loaded");
+      }
     } catch (err) {
+      console.error(err);
       alert("Something went wrong");
     } finally {
       setLoading(false);
@@ -75,9 +91,11 @@ export default function CheckoutPage() {
           <input
             key={key}
             name={key}
+            value={form[key as keyof FormState]}
             placeholder={key.replace("_", " ").toUpperCase()}
             onChange={handleChange}
             className="w-full border p-3 rounded-lg mb-3"
+            required
           />
         ))}
 
