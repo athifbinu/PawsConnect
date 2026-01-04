@@ -34,7 +34,7 @@ export function AdminHeader() {
     { href: "/admin/list", label: "List" },
   ];
 
-  const isActive = (href) => pathname === href;
+  const isActive = (href: string): boolean => pathname === href;
 
   return (
     <header className="backdrop-blur-md bg-blue-700/80 text-white shadow-lg sticky top-0 z-50 border-b border-blue-500/40">
