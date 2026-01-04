@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/supabace/config";
 import { motion } from "framer-motion";
 import { PawPrint, Users } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [petCount, setPetCount] = useState(0);
-  const [customerCount, setCustomerCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+
+  const [user, setUser] = useState<User | null>(null);
+  const [petCount, setPetCount] = useState<number>(0);
+  const [customerCount, setCustomerCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // -------------------------
   // CHECK USER LOGIN
@@ -19,6 +21,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function checkUser() {
       const { data } = await supabase.auth.getUser();
+
       if (!data?.user) {
         router.push("/admin/login");
       } else {
@@ -26,8 +29,9 @@ export default function Dashboard() {
         fetchCounts();
       }
     }
+
     checkUser();
-  }, []);
+  }, [router]);
 
   // -------------------------
   // FETCH PET & CUSTOMER COUNT
@@ -43,8 +47,8 @@ export default function Dashboard() {
       .from("customers")
       .select("*", { count: "exact", head: true });
 
-    setPetCount(totalPets || 0);
-    setCustomerCount(totalCustomers || 0);
+    setPetCount(totalPets ?? 0);
+    setCustomerCount(totalCustomers ?? 0);
     setLoading(false);
   }
 
@@ -52,14 +56,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* HEADER */}
       <h1 className="text-3xl font-bold text-gray-800">
-        Welcome, {user.email} 👋
+        Welcome, {user.email}
       </h1>
 
-      {/* GRID STATS */}
       <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* TOTAL PETS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -77,7 +78,6 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* TOTAL CUSTOMERS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -95,14 +95,13 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* MORE FEATURES BOX */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9 }}
           className="p-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl shadow-lg text-white"
         >
-          <h3 className="text-xl font-semibold">More Features Coming… 🚀</h3>
+          <h3 className="text-xl font-semibold">More Features Coming</h3>
           <p className="opacity-90 mt-2">
             Analytics, sales insights, and advanced admin tools.
           </p>
