@@ -1,3 +1,14 @@
-export default function AdminPage() {
-  return <h1 className="text-xl font-bold">Welcome to Admin Dashboard 🧑‍💼</h1>;
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function AdminIndexPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/admin/dashboard");
+  }, [router]);
+
+  return null;
 }
