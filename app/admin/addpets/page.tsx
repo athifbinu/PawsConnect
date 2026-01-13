@@ -1,370 +1,329 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/supabace/config";
-import Swal from "sweetalert2";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
+import Image from "next/image";
 import {
   PawPrint,
-  ImagePlus,
   MapPin,
+  Syringe,
+  Baby,
   Phone,
   Mail,
   IndianRupee,
+  ImagePlus,
 } from "lucide-react";
+import { supabase } from "@/supabace/config";
 
-/* shadcn/ui */
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
-type FormState = {
-  pet_name: string;
-  pet_category: string;
-  location: string;
-  sex: string;
-  age_type: string;
-  personality: string;
-  health_status: string;
+type FormDataType = {
+  petName: string;
+  category: string;
   vaccination: string;
-  adoption_type: string;
+  ageType: string;
+  location: string;
+  ownerContact: string;
+  ownerEmail: string;
+  adoptionType: string;
   price: string;
-  owner_contact: string;
-  owner_email: string;
   about: string;
-  main_image: File | null;
-  sub1: File | null;
-  sub2: File | null;
-  sub3: File | null;
+  mainImage: File | null;
 };
 
-export default function AddPetPage() {
+export default function AddPet() {
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
 
-  const [form, setForm] = useState<FormState>({
-    pet_name: "",
-    pet_category: "",
-    location: "",
-    sex: "",
-    age_type: "",
-    personality: "",
-    health_status: "",
+  const [formData, setFormData] = useState<FormDataType>({
+    petName: "",
+    category: "",
     vaccination: "",
-    adoption_type: "",
+    ageType: "",
+    location: "",
+    ownerContact: "",
+    ownerEmail: "",
+    adoptionType: "",
     price: "",
-    owner_contact: "",
-    owner_email: "",
     about: "",
-    main_image: null,
-    sub1: null,
-    sub2: null,
-    sub3: null,
+    mainImage: null,
   });
 
-  /* ---------------- HANDLERS ---------------- */
+  // -------------------------
+  // HANDLE INPUT
+  // -------------------------
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value, files } = e.target as HTMLInputElement;
 
-  const handleChange = (e: any) => {
-    const { name, value, files } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (files && files[0]) {
+      setFormData((p) => ({ ...p, [name]: files[0] }));
+      setPreview(URL.createObjectURL(files[0]));
+    } else {
+      setFormData((p) => ({ ...p, [name]: value }));
+    }
   };
 
+  // -------------------------
+  // IMAGE UPLOAD
+  // -------------------------
   const uploadImage = async (file: File | null) => {
     if (!file) return null;
 
-    const filePath = `${Date.now()}-${file.name}`;
-
+    const fileName = `${Date.now()}-${file.name}`;
     const { error } = await supabase.storage
       .from("pets")
-      .upload(filePath, file);
+      .upload(fileName, file);
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from("pets").getPublicUrl(filePath);
-
+    const { data } = supabase.storage.from("pets").getPublicUrl(fileName);
     return data.publicUrl;
   };
 
-  /* ---------------- SUBMIT ---------------- */
-
-  const handleSubmit = async (e: any) => {
+  // -------------------------
+  // SUBMIT
+  // -------------------------
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const mainImage = await uploadImage(form.main_image);
-      const s1 = await uploadImage(form.sub1);
-      const s2 = await uploadImage(form.sub2);
-      const s3 = await uploadImage(form.sub3);
+      const imageUrl = await uploadImage(formData.mainImage);
 
       const { error } = await supabase.from("pets").insert([
         {
-          pet_name: form.pet_name,
-          pet_category: form.pet_category,
-          main_image: mainImage,
-          sub_images: [s1, s2, s3].filter(Boolean),
-          location: form.location,
-          sex: form.sex,
-          age_type: form.age_type,
-          personality: form.personality,
-          health_status: form.health_status,
-          vaccination: form.vaccination,
-          adoption_type: form.adoption_type,
-          price: form.adoption_type === "Paid" ? Number(form.price) : null,
-          owner_contact: form.owner_contact,
-          owner_email: form.owner_email,
-          about: form.about,
-          created_at: new Date().toISOString(),
+          pet_name: formData.petName,
+          pet_category: formData.category,
+          vaccination: formData.vaccination,
+          age_type: formData.ageType,
+          location: formData.location,
+          owner_contact: formData.ownerContact,
+          owner_email: formData.ownerEmail,
+          adoption_type: formData.adoptionType,
+          price:
+            formData.adoptionType === "Paid" ? Number(formData.price) : null,
+          about: formData.about,
+          main_image: imageUrl,
+          created_at: new Date(),
         },
       ]);
 
-      if (error) {
-        console.error(error);
-        Swal.fire("Upload Failed", error.message, "error");
-        return;
-      }
+      if (error) throw error;
 
-      Swal.fire("Success", "Pet added successfully!", "success");
-
-      setForm({
-        pet_name: "",
-        pet_category: "",
-        location: "",
-        sex: "",
-        age_type: "",
-        personality: "",
-        health_status: "",
-        vaccination: "",
-        adoption_type: "",
-        price: "",
-        owner_contact: "",
-        owner_email: "",
-        about: "",
-        main_image: null,
-        sub1: null,
-        sub2: null,
-        sub3: null,
+      Swal.fire({
+        icon: "success",
+        title: "Pet Added Successfully",
+        timer: 2000,
+        showConfirmButton: false,
       });
+
+      setFormData({
+        petName: "",
+        category: "",
+        vaccination: "",
+        ageType: "",
+        location: "",
+        ownerContact: "",
+        ownerEmail: "",
+        adoptionType: "",
+        price: "",
+        about: "",
+        mainImage: null,
+      });
+      setPreview(null);
     } catch (err: any) {
-      console.error(err);
-      Swal.fire("Error", err.message, "error");
+      Swal.fire("Upload Failed", err.message, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- UI ---------------- */
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto p-6"
+      className="max-w-5xl mx-auto px-4 py-10"
     >
-      <h1 className="text-3xl font-bold flex items-center gap-2 mb-6">
-        <PawPrint className="text-primary" />
+      <h1 className="text-4xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+        <PawPrint className="text-indigo-600" />
         Add New Pet
       </h1>
 
-      <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6">
-        {/* Pet Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pet Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Field label="Pet Name">
-              <Input
-                name="pet_name"
-                value={form.pet_name}
-                onChange={handleChange}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-3xl shadow-xl p-8 grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        {/* PET NAME */}
+        <Input
+          icon={<PawPrint />}
+          placeholder="Pet Name"
+          name="petName"
+          value={formData.petName}
+          onChange={handleChange}
+        />
+
+        {/* CATEGORY */}
+        <Select
+          icon={<PawPrint />}
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+        >
+          <option value="">Category</option>
+          <option>Dog</option>
+          <option>Cat</option>
+          <option>Bird</option>
+          <option>Fish</option>
+        </Select>
+
+        {/* VACCINATION */}
+        <Select
+          icon={<Syringe />}
+          name="vaccination"
+          value={formData.vaccination}
+          onChange={handleChange}
+        >
+          <option value="">Vaccination</option>
+          <option>Fully Vaccinated</option>
+          <option>Partially Vaccinated</option>
+          <option>Not Vaccinated</option>
+        </Select>
+
+        {/* AGE */}
+        <Select
+          icon={<Baby />}
+          name="ageType"
+          value={formData.ageType}
+          onChange={handleChange}
+        >
+          <option value="">Age</option>
+          <option>Puppy / Kitten</option>
+          <option>Young</option>
+          <option>Adult</option>
+          <option>Senior</option>
+        </Select>
+
+        <Input
+          icon={<MapPin />}
+          placeholder="Location"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+        />
+        <Input
+          icon={<Phone />}
+          placeholder="Owner Contact"
+          name="ownerContact"
+          value={formData.ownerContact}
+          onChange={handleChange}
+        />
+        <Input
+          icon={<Mail />}
+          placeholder="Owner Email"
+          name="ownerEmail"
+          value={formData.ownerEmail}
+          onChange={handleChange}
+        />
+
+        <Select
+          icon={<IndianRupee />}
+          name="adoptionType"
+          value={formData.adoptionType}
+          onChange={handleChange}
+        >
+          <option value="">Adoption Type</option>
+          <option>Free</option>
+          <option>Paid</option>
+        </Select>
+
+        {formData.adoptionType === "Paid" && (
+          <Input
+            icon={<IndianRupee />}
+            placeholder="Price"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+          />
+        )}
+
+        <textarea
+          name="about"
+          value={formData.about}
+          onChange={handleChange}
+          placeholder="About the pet"
+          className="md:col-span-2 border rounded-2xl p-4"
+        />
+
+        {/* IMAGE UPLOAD */}
+        <div className="md:col-span-2">
+          <label className="flex items-center gap-2 mb-2 font-medium">
+            <ImagePlus /> Pet Image
+          </label>
+
+          {preview && (
+            <div className="mb-4">
+              <Image
+                src={preview}
+                alt="Preview"
+                width={300}
+                height={200}
+                className="rounded-xl object-cover"
               />
-            </Field>
+            </div>
+          )}
 
-            <Field label="Category">
-              <Input
-                name="pet_category"
-                value={form.pet_category}
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field label="Age">
-              <Input
-                name="age_type"
-                value={form.age_type}
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field label="Sex">
-              <Select onValueChange={(v) => setForm({ ...form, sex: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </CardContent>
-        </Card>
-
-        {/* Health */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Health & Adoption</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Field label="Health Status">
-              <Input name="health_status" onChange={handleChange} />
-            </Field>
-
-            <Field label="Vaccination">
-              <Input name="vaccination" onChange={handleChange} />
-            </Field>
-
-            <Field label="Adoption Type">
-              <Select
-                onValueChange={(v) => setForm({ ...form, adoption_type: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Free">Free</SelectItem>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {form.adoption_type === "Paid" && (
-              <Field label="Price">
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-3 w-4 h-4" />
-                  <Input
-                    name="price"
-                    className="pl-8"
-                    onChange={handleChange}
-                  />
-                </div>
-              </Field>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Owner */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Owner Info</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Field label="Location">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 w-4 h-4" />
-                <Input
-                  name="location"
-                  className="pl-8"
-                  onChange={handleChange}
-                />
-              </div>
-            </Field>
-
-            <Field label="Contact">
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 w-4 h-4" />
-                <Input
-                  name="owner_contact"
-                  className="pl-8"
-                  onChange={handleChange}
-                />
-              </div>
-            </Field>
-
-            <Field label="Email">
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4" />
-                <Input
-                  name="owner_email"
-                  className="pl-8"
-                  onChange={handleChange}
-                />
-              </div>
-            </Field>
-          </CardContent>
-        </Card>
-
-        {/* Images */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Images</CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-4 gap-4">
-            <FileBox
-              label="Main Image"
-              name="main_image"
-              onChange={handleChange}
-            />
-            <FileBox label="Image 1" name="sub1" onChange={handleChange} />
-            <FileBox label="Image 2" name="sub2" onChange={handleChange} />
-            <FileBox label="Image 3" name="sub3" onChange={handleChange} />
-          </CardContent>
-        </Card>
-
-        {/* About */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>About Pet</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              rows={4}
-              name="about"
-              placeholder="Describe the pet..."
-              onChange={handleChange}
-            />
-          </CardContent>
-        </Card>
-
-        <div className="lg:col-span-3">
-          <Button type="submit" disabled={loading} className="w-full h-12">
-            {loading ? "Uploading..." : "Add Pet"}
-          </Button>
+          <input
+            type="file"
+            name="mainImage"
+            accept="image/*"
+            onChange={handleChange}
+          />
         </div>
+
+        <button
+          disabled={loading}
+          className="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-semibold transition"
+        >
+          {loading ? "Uploading..." : "Add Pet"}
+        </button>
       </form>
     </motion.div>
   );
 }
 
-/* ---------- SMALL COMPONENTS ---------- */
+/* -------------------------
+   REUSABLE COMPONENTS
+------------------------- */
 
-function Field({ label, children }: any) {
+function Input({ icon, ...props }: any) {
   return (
-    <div className="space-y-1">
-      <Label>{label}</Label>
-      {children}
+    <div className="relative">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+        {icon}
+      </span>
+      <input
+        {...props}
+        className="w-full pl-12 pr-4 py-3 border rounded-2xl focus:ring-2 focus:ring-indigo-500"
+      />
     </div>
   );
 }
 
-function FileBox({ label, ...props }: any) {
+function Select({ icon, children, ...props }: any) {
   return (
-    <div className="border-2 border-dashed rounded-xl p-4 text-center">
-      <ImagePlus className="mx-auto mb-2" />
-      <p className="text-sm mb-2">{label}</p>
-      <Input type="file" {...props} />
+    <div className="relative">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+        {icon}
+      </span>
+      <select
+        {...props}
+        className="w-full pl-12 pr-4 py-3 border rounded-2xl bg-white focus:ring-2 focus:ring-indigo-500"
+      >
+        {children}
+      </select>
     </div>
   );
 }
