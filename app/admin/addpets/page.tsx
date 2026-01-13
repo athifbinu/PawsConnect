@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/supabace/config";
+import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import {
   PawPrint,
@@ -8,52 +10,71 @@ import {
   MapPin,
   Phone,
   Mail,
-  BadgeDollarSign,
+  IndianRupee,
 } from "lucide-react";
-import Swal from "sweetalert2";
-import { supabase } from "../../../supabace/config";
 
-/* shadcn */
+/* shadcn/ui */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+type FormState = {
+  pet_name: string;
+  pet_category: string;
+  location: string;
+  sex: string;
+  age_type: string;
+  personality: string;
+  health_status: string;
+  vaccination: string;
+  adoption_type: string;
+  price: string;
+  owner_contact: string;
+  owner_email: string;
+  about: string;
+  main_image: File | null;
+  sub1: File | null;
+  sub2: File | null;
+  sub3: File | null;
+};
 
 export default function AddPetPage() {
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<any>({
-    petName: "",
-    category: "",
+
+  const [form, setForm] = useState<FormState>({
+    pet_name: "",
+    pet_category: "",
     location: "",
     sex: "",
-    age: "",
+    age_type: "",
     personality: "",
-    health: "",
+    health_status: "",
     vaccination: "",
-    adoptionType: "",
+    adoption_type: "",
     price: "",
-    ownerContact: "",
-    ownerEmail: "",
+    owner_contact: "",
+    owner_email: "",
     about: "",
-    mainImage: null,
+    main_image: null,
     sub1: null,
     sub2: null,
     sub3: null,
   });
 
-  /* -------------------- HANDLERS -------------------- */
+  /* ---------------- HANDLERS ---------------- */
 
   const handleChange = (e: any) => {
     const { name, value, files } = e.target;
-    setForm((prev: any) => ({
+    setForm((prev) => ({
       ...prev,
       [name]: files ? files[0] : value,
     }));
@@ -61,85 +82,132 @@ export default function AddPetPage() {
 
   const uploadImage = async (file: File | null) => {
     if (!file) return null;
-    const fileName = `${Date.now()}-${file.name}`;
-    await supabase.storage.from("pets").upload(fileName, file);
-    return supabase.storage.from("pets").getPublicUrl(fileName).data.publicUrl;
+
+    const filePath = `${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("pets")
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from("pets").getPublicUrl(filePath);
+
+    return data.publicUrl;
   };
+
+  /* ---------------- SUBMIT ---------------- */
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const main = await uploadImage(form.mainImage);
+      const mainImage = await uploadImage(form.main_image);
       const s1 = await uploadImage(form.sub1);
       const s2 = await uploadImage(form.sub2);
       const s3 = await uploadImage(form.sub3);
 
-      await supabase.from("pets").insert({
-        pet_name: form.petName,
-        pet_category: form.category,
-        main_image: main,
-        sub_images: [s1, s2, s3].filter(Boolean),
-        location: form.location,
-        sex: form.sex,
-        age_type: form.age,
-        personality: form.personality,
-        health_status: form.health,
-        vaccination: form.vaccination,
-        adoption_type: form.adoptionType,
-        price: form.adoptionType === "Paid" ? form.price : null,
-        owner_contact: form.ownerContact,
-        owner_email: form.ownerEmail,
-        about: form.about,
-      });
+      const { error } = await supabase.from("pets").insert([
+        {
+          pet_name: form.pet_name,
+          pet_category: form.pet_category,
+          main_image: mainImage,
+          sub_images: [s1, s2, s3].filter(Boolean),
+          location: form.location,
+          sex: form.sex,
+          age_type: form.age_type,
+          personality: form.personality,
+          health_status: form.health_status,
+          vaccination: form.vaccination,
+          adoption_type: form.adoption_type,
+          price: form.adoption_type === "Paid" ? Number(form.price) : null,
+          owner_contact: form.owner_contact,
+          owner_email: form.owner_email,
+          about: form.about,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (error) {
+        console.error(error);
+        Swal.fire("Upload Failed", error.message, "error");
+        return;
+      }
 
       Swal.fire("Success", "Pet added successfully!", "success");
+
+      setForm({
+        pet_name: "",
+        pet_category: "",
+        location: "",
+        sex: "",
+        age_type: "",
+        personality: "",
+        health_status: "",
+        vaccination: "",
+        adoption_type: "",
+        price: "",
+        owner_contact: "",
+        owner_email: "",
+        about: "",
+        main_image: null,
+        sub1: null,
+        sub2: null,
+        sub3: null,
+      });
     } catch (err: any) {
+      console.error(err);
       Swal.fire("Error", err.message, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  /* -------------------- UI -------------------- */
+  /* ---------------- UI ---------------- */
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto p-6"
+      className="max-w-6xl mx-auto p-6"
     >
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <PawPrint className="text-primary" />
-          Add New Pet
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Create a new pet listing for adoption
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold flex items-center gap-2 mb-6">
+        <PawPrint className="text-primary" />
+        Add New Pet
+      </h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-      >
-        {/* PET INFO */}
+      <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6">
+        {/* Pet Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Pet Information</CardTitle>
+            <CardTitle>Pet Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Field label="Pet Name">
-              <Input name="petName" onChange={handleChange} />
+              <Input
+                name="pet_name"
+                value={form.pet_name}
+                onChange={handleChange}
+              />
             </Field>
+
             <Field label="Category">
-              <Input name="category" onChange={handleChange} />
+              <Input
+                name="pet_category"
+                value={form.pet_category}
+                onChange={handleChange}
+              />
             </Field>
+
             <Field label="Age">
-              <Input name="age" onChange={handleChange} />
+              <Input
+                name="age_type"
+                value={form.age_type}
+                onChange={handleChange}
+              />
             </Field>
+
             <Field label="Sex">
               <Select onValueChange={(v) => setForm({ ...form, sex: v })}>
                 <SelectTrigger>
@@ -151,27 +219,26 @@ export default function AddPetPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Personality">
-              <Input name="personality" onChange={handleChange} />
-            </Field>
           </CardContent>
         </Card>
 
-        {/* HEALTH */}
+        {/* Health */}
         <Card>
           <CardHeader>
             <CardTitle>Health & Adoption</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Field label="Health Status">
-              <Input name="health" onChange={handleChange} />
+              <Input name="health_status" onChange={handleChange} />
             </Field>
+
             <Field label="Vaccination">
               <Input name="vaccination" onChange={handleChange} />
             </Field>
+
             <Field label="Adoption Type">
               <Select
-                onValueChange={(v) => setForm({ ...form, adoptionType: v })}
+                onValueChange={(v) => setForm({ ...form, adoption_type: v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
@@ -183,54 +250,55 @@ export default function AddPetPage() {
               </Select>
             </Field>
 
-            {form.adoptionType === "Paid" && (
+            {form.adoption_type === "Paid" && (
               <Field label="Price">
                 <div className="relative">
-                  <BadgeDollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <IndianRupee className="absolute left-3 top-3 w-4 h-4" />
                   <Input
                     name="price"
-                    className="pl-9"
+                    className="pl-8"
                     onChange={handleChange}
                   />
                 </div>
               </Field>
             )}
-
-            <Field label="Location">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  name="location"
-                  className="pl-9"
-                  onChange={handleChange}
-                />
-              </div>
-            </Field>
           </CardContent>
         </Card>
 
-        {/* OWNER */}
+        {/* Owner */}
         <Card>
           <CardHeader>
-            <CardTitle>Owner Details</CardTitle>
+            <CardTitle>Owner Info</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Field label="Contact">
+            <Field label="Location">
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <MapPin className="absolute left-3 top-3 w-4 h-4" />
                 <Input
-                  name="ownerContact"
-                  className="pl-9"
+                  name="location"
+                  className="pl-8"
                   onChange={handleChange}
                 />
               </div>
             </Field>
+
+            <Field label="Contact">
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 w-4 h-4" />
+                <Input
+                  name="owner_contact"
+                  className="pl-8"
+                  onChange={handleChange}
+                />
+              </div>
+            </Field>
+
             <Field label="Email">
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 w-4 h-4" />
                 <Input
-                  name="ownerEmail"
-                  className="pl-9"
+                  name="owner_email"
+                  className="pl-8"
                   onChange={handleChange}
                 />
               </div>
@@ -238,15 +306,15 @@ export default function AddPetPage() {
           </CardContent>
         </Card>
 
-        {/* IMAGES */}
+        {/* Images */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Pet Images</CardTitle>
+            <CardTitle>Images</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardContent className="grid md:grid-cols-4 gap-4">
             <FileBox
               label="Main Image"
-              name="mainImage"
+              name="main_image"
               onChange={handleChange}
             />
             <FileBox label="Image 1" name="sub1" onChange={handleChange} />
@@ -255,7 +323,7 @@ export default function AddPetPage() {
           </CardContent>
         </Card>
 
-        {/* ABOUT */}
+        {/* About */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>About Pet</CardTitle>
@@ -264,19 +332,14 @@ export default function AddPetPage() {
             <Textarea
               rows={4}
               name="about"
-              placeholder="Write something about the pet..."
+              placeholder="Describe the pet..."
               onChange={handleChange}
             />
           </CardContent>
         </Card>
 
-        {/* SUBMIT */}
         <div className="lg:col-span-3">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full h-12 text-lg"
-          >
+          <Button type="submit" disabled={loading} className="w-full h-12">
             {loading ? "Uploading..." : "Add Pet"}
           </Button>
         </div>
@@ -285,7 +348,7 @@ export default function AddPetPage() {
   );
 }
 
-/* ---------------- SMALL UI HELPERS ---------------- */
+/* ---------- SMALL COMPONENTS ---------- */
 
 function Field({ label, children }: any) {
   return (
@@ -298,10 +361,10 @@ function Field({ label, children }: any) {
 
 function FileBox({ label, ...props }: any) {
   return (
-    <div className="border-dashed border-2 rounded-xl p-4 text-center">
-      <ImagePlus className="mx-auto text-muted-foreground" />
-      <p className="text-sm mt-2">{label}</p>
-      <Input type="file" className="mt-2" {...props} />
+    <div className="border-2 border-dashed rounded-xl p-4 text-center">
+      <ImagePlus className="mx-auto mb-2" />
+      <p className="text-sm mb-2">{label}</p>
+      <Input type="file" {...props} />
     </div>
   );
 }
