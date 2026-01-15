@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
-import Image from "next/image";
 import {
   PawPrint,
   MapPin,
@@ -15,6 +14,8 @@ import {
   ImagePlus,
 } from "lucide-react";
 import { supabase } from "@/supabace/config";
+
+/* ---------------- TYPES ---------------- */
 
 type FormDataType = {
   petName: string;
@@ -28,11 +29,23 @@ type FormDataType = {
   price: string;
   about: string;
   mainImage: File | null;
+  subImage1: File | null;
+  subImage2: File | null;
+  subImage3: File | null;
+};
+
+type PreviewType = {
+  mainImage: string | null;
+  subImage1: string | null;
+  subImage2: string | null;
+  subImage3: string | null;
 };
 
 export default function AddPet() {
+  /* ---------------- ALL HOOKS FIRST ---------------- */
+
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormDataType>({
     petName: "",
@@ -46,11 +59,28 @@ export default function AddPet() {
     price: "",
     about: "",
     mainImage: null,
+    subImage1: null,
+    subImage2: null,
+    subImage3: null,
   });
 
-  // -------------------------
-  // HANDLE INPUT
-  // -------------------------
+  const [preview, setPreview] = useState<PreviewType>({
+    mainImage: null,
+    subImage1: null,
+    subImage2: null,
+    subImage3: null,
+  });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  /* ---------------- SAFE EARLY RETURN ---------------- */
+
+  if (!mounted) return null;
+
+  /* ---------------- HANDLERS ---------------- */
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -60,38 +90,49 @@ export default function AddPet() {
 
     if (files && files[0]) {
       setFormData((p) => ({ ...p, [name]: files[0] }));
-      setPreview(URL.createObjectURL(files[0]));
+      setPreview((p) => ({
+        ...p,
+        [name]: URL.createObjectURL(files[0]),
+      }));
     } else {
       setFormData((p) => ({ ...p, [name]: value }));
     }
   };
 
-  // -------------------------
-  // IMAGE UPLOAD
-  // -------------------------
-  const uploadImage = async (file: File | null) => {
+  const uploadImage = async (
+    file: File | null,
+    folder: string,
+    fileName: string
+  ) => {
     if (!file) return null;
 
-    const fileName = `${Date.now()}-${file.name}`;
+    const path = `pets/${folder}/${fileName}`;
+
     const { error } = await supabase.storage
       .from("pets")
-      .upload(fileName, file);
+      .upload(path, file, { upsert: true });
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from("pets").getPublicUrl(fileName);
+    const { data } = supabase.storage.from("pets").getPublicUrl(path);
     return data.publicUrl;
   };
 
-  // -------------------------
-  // SUBMIT
-  // -------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const imageUrl = await uploadImage(formData.mainImage);
+      const petFolder = Date.now().toString();
+
+      const mainImageUrl = await uploadImage(
+        formData.mainImage,
+        petFolder,
+        "main.jpg"
+      );
+      const sub1 = await uploadImage(formData.subImage1, petFolder, "sub1.jpg");
+      const sub2 = await uploadImage(formData.subImage2, petFolder, "sub2.jpg");
+      const sub3 = await uploadImage(formData.subImage3, petFolder, "sub3.jpg");
 
       const { error } = await supabase.from("pets").insert([
         {
@@ -106,7 +147,10 @@ export default function AddPet() {
           price:
             formData.adoptionType === "Paid" ? Number(formData.price) : null,
           about: formData.about,
-          main_image: imageUrl,
+          main_image: mainImageUrl,
+          sub_image_1: sub1,
+          sub_image_2: sub2,
+          sub_image_3: sub3,
           created_at: new Date(),
         },
       ]);
@@ -132,8 +176,17 @@ export default function AddPet() {
         price: "",
         about: "",
         mainImage: null,
+        subImage1: null,
+        subImage2: null,
+        subImage3: null,
       });
-      setPreview(null);
+
+      setPreview({
+        mainImage: null,
+        subImage1: null,
+        subImage2: null,
+        subImage3: null,
+      });
     } catch (err: any) {
       Swal.fire("Upload Failed", err.message, "error");
     } finally {
@@ -141,13 +194,15 @@ export default function AddPet() {
     }
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-5xl mx-auto px-4 py-10"
     >
-      <h1 className="text-4xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+      <h1 className="text-4xl font-bold mb-8 flex items-center gap-3">
         <PawPrint className="text-indigo-600" />
         Add New Pet
       </h1>
@@ -156,16 +211,14 @@ export default function AddPet() {
         onSubmit={handleSubmit}
         className="bg-white rounded-3xl shadow-xl p-8 grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        {/* PET NAME */}
         <Input
           icon={<PawPrint />}
-          placeholder="Pet Name"
           name="petName"
+          placeholder="Pet Name"
           value={formData.petName}
           onChange={handleChange}
         />
 
-        {/* CATEGORY */}
         <Select
           icon={<PawPrint />}
           name="category"
@@ -179,7 +232,6 @@ export default function AddPet() {
           <option>Fish</option>
         </Select>
 
-        {/* VACCINATION */}
         <Select
           icon={<Syringe />}
           name="vaccination"
@@ -192,7 +244,6 @@ export default function AddPet() {
           <option>Not Vaccinated</option>
         </Select>
 
-        {/* AGE */}
         <Select
           icon={<Baby />}
           name="ageType"
@@ -208,22 +259,22 @@ export default function AddPet() {
 
         <Input
           icon={<MapPin />}
-          placeholder="Location"
           name="location"
+          placeholder="Location"
           value={formData.location}
           onChange={handleChange}
         />
         <Input
           icon={<Phone />}
-          placeholder="Owner Contact"
           name="ownerContact"
+          placeholder="Owner Contact"
           value={formData.ownerContact}
           onChange={handleChange}
         />
         <Input
           icon={<Mail />}
-          placeholder="Owner Email"
           name="ownerEmail"
+          placeholder="Owner Email"
           value={formData.ownerEmail}
           onChange={handleChange}
         />
@@ -242,8 +293,8 @@ export default function AddPet() {
         {formData.adoptionType === "Paid" && (
           <Input
             icon={<IndianRupee />}
-            placeholder="Price"
             name="price"
+            placeholder="Price"
             value={formData.price}
             onChange={handleChange}
           />
@@ -257,35 +308,41 @@ export default function AddPet() {
           className="md:col-span-2 border rounded-2xl p-4"
         />
 
-        {/* IMAGE UPLOAD */}
-        <div className="md:col-span-2">
-          <label className="flex items-center gap-2 mb-2 font-medium">
-            <ImagePlus /> Pet Image
-          </label>
-
-          {preview && (
-            <div className="mb-4">
-              <Image
-                src={preview}
-                alt="Preview"
-                width={300}
-                height={200}
-                className="rounded-xl object-cover"
-              />
-            </div>
+        <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {(["mainImage", "subImage1", "subImage2", "subImage3"] as const).map(
+            (key) => (
+              <label
+                key={key}
+                className="border-2 border-dashed rounded-xl p-3 cursor-pointer"
+              >
+                {preview[key] ? (
+                  <img
+                    src={preview[key]!}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="text-gray-400 flex flex-col items-center gap-2">
+                    <ImagePlus />
+                    <span className="text-sm">
+                      {key === "mainImage" ? "Main Image" : "Extra Image"}
+                    </span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name={key}
+                  accept="image/*"
+                  hidden
+                  onChange={handleChange}
+                />
+              </label>
+            )
           )}
-
-          <input
-            type="file"
-            name="mainImage"
-            accept="image/*"
-            onChange={handleChange}
-          />
         </div>
 
         <button
           disabled={loading}
-          className="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-semibold transition"
+          className="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-semibold"
         >
           {loading ? "Uploading..." : "Add Pet"}
         </button>
@@ -294,9 +351,7 @@ export default function AddPet() {
   );
 }
 
-/* -------------------------
-   REUSABLE COMPONENTS
-------------------------- */
+/* ---------------- REUSABLE ---------------- */
 
 function Input({ icon, ...props }: any) {
   return (
@@ -304,10 +359,7 @@ function Input({ icon, ...props }: any) {
       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
         {icon}
       </span>
-      <input
-        {...props}
-        className="w-full pl-12 pr-4 py-3 border rounded-2xl focus:ring-2 focus:ring-indigo-500"
-      />
+      <input {...props} className="w-full pl-12 pr-4 py-3 border rounded-2xl" />
     </div>
   );
 }
@@ -320,7 +372,7 @@ function Select({ icon, children, ...props }: any) {
       </span>
       <select
         {...props}
-        className="w-full pl-12 pr-4 py-3 border rounded-2xl bg-white focus:ring-2 focus:ring-indigo-500"
+        className="w-full pl-12 pr-4 py-3 border rounded-2xl bg-white"
       >
         {children}
       </select>
