@@ -12,6 +12,7 @@ import {
   Mail,
   IndianRupee,
   ImagePlus,
+  UserRound,
 } from "lucide-react";
 import { supabase } from "@/supabace/config";
 
@@ -25,9 +26,13 @@ type FormDataType = {
   location: string;
   ownerContact: string;
   ownerEmail: string;
+  ownerName: string;
   adoptionType: string;
   price: string;
   about: string;
+  sex: String;
+  personality: String;
+  health_status: String;
   mainImage: File | null;
   subImage1: File | null;
   subImage2: File | null;
@@ -55,9 +60,13 @@ export default function AddPet() {
     location: "",
     ownerContact: "",
     ownerEmail: "",
+    ownerName: "",
     adoptionType: "",
     price: "",
     about: "",
+    sex: "",
+    health_status: "",
+    personality: "",
     mainImage: null,
     subImage1: null,
     subImage2: null,
@@ -84,7 +93,7 @@ export default function AddPet() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value, files } = e.target as HTMLInputElement;
 
@@ -102,7 +111,7 @@ export default function AddPet() {
   const uploadImage = async (
     file: File | null,
     folder: string,
-    fileName: string
+    fileName: string,
   ) => {
     if (!file) return null;
 
@@ -128,7 +137,7 @@ export default function AddPet() {
       const mainImageUrl = await uploadImage(
         formData.mainImage,
         petFolder,
-        "main.jpg"
+        "main.jpg",
       );
       const sub1 = await uploadImage(formData.subImage1, petFolder, "sub1.jpg");
       const sub2 = await uploadImage(formData.subImage2, petFolder, "sub2.jpg");
@@ -144,6 +153,10 @@ export default function AddPet() {
           owner_contact: formData.ownerContact,
           owner_email: formData.ownerEmail,
           adoption_type: formData.adoptionType,
+          owner_name: formData.ownerName,
+          sex: formData.sex,
+          health_status: formData.health_status,
+          personality: formData.personality,
           price:
             formData.adoptionType === "Paid" ? Number(formData.price) : null,
           about: formData.about,
@@ -173,8 +186,12 @@ export default function AddPet() {
         ownerContact: "",
         ownerEmail: "",
         adoptionType: "",
+        ownerName: "",
         price: "",
         about: "",
+        sex: "",
+        health_status: "",
+        personality: "",
         mainImage: null,
         subImage1: null,
         subImage2: null,
@@ -246,15 +263,49 @@ export default function AddPet() {
 
         <Select
           icon={<Baby />}
+          name="sex"
+          value={formData.sex}
+          onChange={handleChange}
+        >
+          <option value="">Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </Select>
+
+        <Select
+          icon={<Baby />}
           name="ageType"
           value={formData.ageType}
           onChange={handleChange}
         >
           <option value="">Age</option>
-          <option>Puppy / Kitten</option>
-          <option>Young</option>
-          <option>Adult</option>
-          <option>Senior</option>
+          <option value="Adult">Adult</option>
+          <option value="Puppy">Puppy</option>
+          <option value="Kitten">Kitten</option>
+        </Select>
+
+        <Select
+          icon={<Baby />}
+          name="personality"
+          value={formData.personality}
+          onChange={handleChange}
+        >
+          <option value="">Personality</option>
+          <option value="Good">Good</option>
+          <option value="bad">Bad</option>
+          <option value="Aggressive">Aggressive</option>
+        </Select>
+
+        <Select
+          icon={<Baby />}
+          name="health_status"
+          value={formData.health_status}
+          onChange={handleChange}
+        >
+          <option value="">Health status</option>
+          <option value="Good">Good</option>
+          <option value="bad">Bad</option>
+          <option value="Need care">Need care</option>
         </Select>
 
         <Input
@@ -276,6 +327,13 @@ export default function AddPet() {
           name="ownerEmail"
           placeholder="Owner Email"
           value={formData.ownerEmail}
+          onChange={handleChange}
+        />
+        <Input
+          icon={<UserRound />}
+          name="ownerName"
+          placeholder="Owner Name"
+          value={formData.ownerName}
           onChange={handleChange}
         />
 
@@ -336,7 +394,7 @@ export default function AddPet() {
                   onChange={handleChange}
                 />
               </label>
-            )
+            ),
           )}
         </div>
 

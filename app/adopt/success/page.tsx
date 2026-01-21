@@ -159,6 +159,7 @@ Thank you!
             </InfoBox>
 
             <InfoBox title="Owner Contact">
+              <p>Owner Name : {pet.owner_name}</p>
               <p>Email: {pet.owner_email}</p>
               <p>Phone: {pet.owner_contact}</p>
 
