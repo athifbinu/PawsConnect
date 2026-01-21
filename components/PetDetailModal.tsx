@@ -1,6 +1,6 @@
 "use client";
 
-import { Pet } from "@/types/pet";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,136 +10,73 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, MapPin, Calendar, Star } from "lucide-react";
-import { useState } from "react";
+import {
+  Heart,
+  MapPin,
+  Calendar,
+  Star,
+  ShieldCheck,
+  PawPrint,
+} from "lucide-react";
 
-export function PetDetailModal({ pet, isOpen, onClose }) {
+/* --------------------------------------------------
+   STATIC DISPLAY DATA (UI ONLY)
+-------------------------------------------------- */
+
+const adoptionIncludes = [
+  "Basic health check",
+  "Vaccination record",
+  "Behavior assessment",
+  "Post-adoption guidance",
+];
+
+const idealHome = [
+  "Indoor friendly environment",
+  "Patient and caring family",
+  "Regular vet checkups",
+];
+
+const careLevelMap: Record<string, string> = {
+  Good: "Low Maintenance",
+  "Need care": "High Maintenance",
+  Bad: "Special Attention Required",
+};
+
+/* --------------------------------------------------
+   COMPONENT
+-------------------------------------------------- */
+
+export function PetDetailModal({ pet, isOpen, onClose }: any) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  const images = [pet.main_image, ...(pet.sub_images || [])].filter(Boolean);
-  if (images.length === 0) images.push("/placeholder-pet.jpg");
+  const images = [
+    pet.main_image,
+    pet.sub_image_1,
+    pet.sub_image_2,
+    pet.sub_image_3,
+  ].filter(Boolean);
 
-  const personalityArray = Array.isArray(pet.personality)
-    ? pet.personality
-    : typeof pet.personality === "string"
-    ? pet.personality.split(",").map((p) => p.trim())
-    : [];
-
-  const getAgeLabel = (age) => {
-    switch (age) {
-      case "puppy":
-        return "Puppy";
-      case "young":
-        return "Young";
-      case "adult":
-        return "Adult";
-      case "senior":
-        return "Senior";
-      default:
-        return age;
-    }
-  };
-
-  const getEnergyColor = (level) => {
-    switch (level) {
-      case "low":
-        return "bg-blue-100 text-blue-800";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "high":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  /*  
-  =================================================================
-    🚀 RAZORPAY PAYMENT FUNCTION
-  =================================================================
-  */
-  const handlePayment = async () => {
-    try {
-      // 1️⃣ Create order in backend
-      const orderRes = await fetch("/api/razorpay/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: pet.adoptionFee,
-          petId: pet.id,
-        }),
-      });
-
-      const orderData = await orderRes.json();
-
-      if (!orderData.success) {
-        alert("Order Generation Failed!");
-        return;
-      }
-
-      // 2️⃣ Open Razorpay popup
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.amount,
-        currency: "INR",
-        name: "PawsConnect",
-        description: `Adoption Fee for ${pet.pet_name}`,
-        order_id: orderData.orderId,
-
-        handler: async function (response) {
-          // 3️⃣ Verify payment backend
-          const verifyRes = await fetch("/api/razorpay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...response,
-              petId: pet.id,
-            }),
-          });
-
-          const verifyData = await verifyRes.json();
-
-          if (verifyData.success) {
-            window.location.href = "/adopt/success";
-          } else {
-            alert("Payment Verification Failed!");
-          }
-        },
-
-        prefill: {
-          name: "User",
-          email: "user@example.com",
-        },
-
-        theme: {
-          color: "#f97316",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong!");
-    }
-  };
+  const personalityArray =
+    typeof pet.personality === "string"
+      ? pet.personality.split(",").map((p: string) => p.trim())
+      : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto animate-zoomIn">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex justify-between items-start">
             <div>
-              <DialogTitle className="text-2xl font-bold text-gray-900">
+              <DialogTitle className="text-3xl font-bold">
                 {pet.pet_name}
               </DialogTitle>
-              <p className="text-lg text-gray-600 mt-1">{pet.pet_category}</p>
+              <p className="text-gray-600 text-lg">{pet.pet_category}</p>
             </div>
 
             <button
               onClick={() => setIsFavorited(!isFavorited)}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              className="p-2 rounded-full hover:bg-gray-100"
             >
               <Heart
                 className={`h-6 w-6 ${
@@ -150,95 +87,93 @@ export function PetDetailModal({ pet, isOpen, onClose }) {
           </div>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* ---------------------------------------------------
-                  IMAGE GALLERY
-          --------------------------------------------------- */}
-          <div className="space-y-4">
-            <div className="relative">
-              <img
-                src={images[currentImageIndex]}
-                alt={`${pet.pet_name}-image`}
-                className="w-full h-80 object-cover rounded-lg"
-              />
-
-              {images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentImageIndex(i)}
-                      className={`w-3 h-3 rounded-full ${
-                        i === currentImageIndex ? "bg-white" : "bg-white/50"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+        <div className="grid md:grid-cols-2 gap-10 mt-6">
+          {/* --------------------------------------------------
+              IMAGE GALLERY
+          -------------------------------------------------- */}
+          <div>
+            <img
+              src={images[currentImageIndex] || "/placeholder-pet.jpg"}
+              className="w-full h-80 object-cover rounded-xl"
+            />
 
             {images.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto pb-2">
-                {images.map((image, i) => (
+              <div className="flex gap-3 mt-4 overflow-x-auto">
+                {images.map((img: string, i: number) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImageIndex(i)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${
                       i === currentImageIndex
                         ? "border-orange-500"
                         : "border-gray-200"
                     }`}
                   >
-                    <img src={image} className="w-full h-full object-cover" />
+                    <img src={img} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* ---------------------------------------------------
-                PET DETAILS
-          --------------------------------------------------- */}
+          {/* --------------------------------------------------
+              PET DETAILS
+          -------------------------------------------------- */}
           <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-4 mb-3">
-                <Badge className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {getAgeLabel(pet.age_type)}
-                </Badge>
+            {/* BADGES */}
+            <div className="flex flex-wrap gap-3">
+              <Badge className="flex gap-1">
+                <Calendar className="h-3 w-3" />
+                {pet.age_type}
+              </Badge>
 
-                <Badge variant="secondary" className="capitalize">
-                  {pet.size}
-                </Badge>
+              <Badge variant="secondary">{pet.sex}</Badge>
 
-                <Badge variant="secondary" className="capitalize">
-                  {pet.sex}
-                </Badge>
+              <Badge className="bg-green-100 text-green-700">
+                {pet.vaccination}
+              </Badge>
 
-                <Badge className={getEnergyColor(pet.energyLevel)}>
-                  {pet.health_status}
-                </Badge>
+              <Badge className="bg-blue-100 text-blue-700">
+                {pet.health_status}
+              </Badge>
+            </div>
 
-                <Badge className="bg-green-100 text-green-700">
-                  {pet.vacsination}
-                </Badge>
-              </div>
-
-              <div className="flex items-center gap-2 text-gray-600 mb-4">
-                <MapPin className="h-4 w-4" />
-                <span>{pet.location}</span>
-              </div>
+            {/* LOCATION */}
+            <div className="flex items-center gap-2 text-gray-600">
+              <MapPin className="h-4 w-4" />
+              {pet.location}
             </div>
 
             <Separator />
 
-            {/* Personality */}
+            {/* QUICK INFO CARDS */}
+            <div className="grid grid-cols-2 gap-4">
+              <InfoCard
+                title="Care Level"
+                value={careLevelMap[pet.health_status] || "Normal"}
+                color="orange"
+              />
+
+              <InfoCard title="Gender" value={pet.sex} color="purple" />
+
+              <InfoCard title="Age Type" value={pet.age_type} color="blue" />
+
+              <InfoCard
+                title="Vaccination"
+                value={pet.vaccination}
+                color="green"
+              />
+            </div>
+
+            <Separator />
+
+            {/* PERSONALITY */}
             <div>
               <h3 className="font-semibold mb-3">Personality</h3>
               <div className="flex flex-wrap gap-2">
-                {personalityArray.map((trait, i) => (
+                {personalityArray.map((p: string, i: number) => (
                   <Badge key={i} variant="outline">
-                    {trait}
+                    {p}
                   </Badge>
                 ))}
               </div>
@@ -246,58 +181,59 @@ export function PetDetailModal({ pet, isOpen, onClose }) {
 
             <Separator />
 
-            {/* About Section */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">
+            {/* ABOUT */}
+            <div className="bg-gray-50 p-5 rounded-xl border">
+              <h3 className="font-semibold text-lg mb-2">
                 About {pet.pet_name}
               </h3>
-
-              <p className="text-gray-700 leading-relaxed mb-4">{pet.about}</p>
-
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-sm text-gray-600">Health Status</p>
-                  <p className="text-base font-semibold text-orange-700">
-                    {pet.health_status}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-gray-600">Vaccinated</p>
-                  <p className="text-base font-semibold text-green-700">
-                    {pet.vacsination}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-gray-600">Size</p>
-                  <p className="text-base font-semibold text-blue-700 capitalize">
-                    {pet.age_type}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <p className="text-sm text-gray-600">Gender</p>
-                  <p className="text-base font-semibold text-purple-700 capitalize">
-                    {pet.sex}
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-gray-700 leading-relaxed mt-4">
-                {pet.description}
-              </p>
+              <p className="text-gray-700 leading-relaxed">{pet.about}</p>
             </div>
 
-            <Separator />
+            {/* ADOPTION INCLUDES */}
+            <div className="bg-white p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <PawPrint className="h-5 w-5 text-orange-500" />
+                Adoption Includes
+              </h3>
+
+              <ul className="space-y-2 text-gray-700">
+                {adoptionIncludes.map((item, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mt-2" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* IDEAL HOME */}
+            <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
+              <h3 className="font-semibold text-lg mb-3 text-blue-800">
+                Ideal Home
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {idealHome.map((rule, i) => (
+                  <Badge key={i} variant="outline">
+                    {rule}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* SAFETY NOTE */}
+            <div className="bg-gray-50 border p-4 rounded-xl text-sm text-gray-600 flex gap-2">
+              <ShieldCheck className="h-5 w-5 text-green-600" />
+              Owner details are shared only after adoption confirmation to
+              ensure safety and privacy.
+            </div>
 
             {/* CTA */}
-            <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
+              <div className="flex justify-between items-center mb-4">
                 <div>
                   <p className="text-sm text-gray-600">Adoption Fee</p>
                   <p className="text-3xl font-bold text-orange-600">
-                    ₹{pet.adoptionFee}
+                    ₹{pet.price || 0}
                   </p>
                 </div>
                 <Star className="h-8 w-8 text-orange-400" />
@@ -305,7 +241,6 @@ export function PetDetailModal({ pet, isOpen, onClose }) {
 
               <Button
                 onClick={() => {
-                  // navigate to checkout page with pet id
                   window.location.href = `/adopt/checkout?petId=${pet.id}`;
                 }}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-lg"
@@ -317,5 +252,26 @@ export function PetDetailModal({ pet, isOpen, onClose }) {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* --------------------------------------------------
+   SMALL REUSABLE CARD
+-------------------------------------------------- */
+
+function InfoCard({
+  title,
+  value,
+  color,
+}: {
+  title: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <div className={`p-4 rounded-xl bg-${color}-50 border border-${color}-200`}>
+      <p className="text-sm text-gray-600">{title}</p>
+      <p className={`font-semibold text-${color}-700`}>{value}</p>
+    </div>
   );
 }
