@@ -1,350 +1,372 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/supabace/config";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  MapPin,
-  Heart,
-  Loader2,
-  IndianRupee,
-  Edit3,
-  Trash2,
-  X,
-} from "lucide-react";
 import Swal from "sweetalert2";
+import { MapPin, IndianRupee, Edit3, Trash2, X } from "lucide-react";
 
-const ListPets = () => {
-  const [pets, setPets] = useState([]);
+/* ================= OPTIONS ================= */
+
+const CATEGORY = ["Dog", "Cat", "Bird", "Fish"];
+const AGE = ["Puppy", "Kitten", "Adult"];
+const SEX = ["Male", "Female"];
+const VACCINATION = [
+  "Fully Vaccinated",
+  "Partially Vaccinated",
+  "Not Vaccinated",
+];
+const PERSONALITY = ["Friendly", "Aggressive", "Calm"];
+const HEALTH = ["Good", "Need Care", "Critical"];
+const ADOPTION = ["Free", "Paid"];
+
+/* ================= PAGE ================= */
+
+export default function ListPets() {
+  const [pets, setPets] = useState<any[]>([]);
+  const [editPet, setEditPet] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const [selectedPet, setSelectedPet] = useState(null);
-  const [editPet, setEditPet] = useState(null);
-  const [formData, setFormData] = useState({});
+
+  /* ================= FETCH ================= */
 
   const fetchPets = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("pets")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setPets(data || []);
-    } catch (err) {
-      console.error("Error fetching pets:", err.message);
-      Swal.fire("Error", err.message, "error");
-    } finally {
-      setLoading(false);
-    }
+    const { data, error } = await supabase
+      .from("pets")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error) setPets(data || []);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchPets();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this pet?")) return;
+  /* ================= ACTIONS ================= */
+
+  const handleDelete = async (id: number) => {
+    const ok = confirm("Delete this pet?");
+    if (!ok) return;
+
     const { error } = await supabase.from("pets").delete().eq("id", id);
     if (error) {
-      Swal.fire("❌ Failed to delete pet", error.message, "error");
+      Swal.fire("Error", error.message, "error");
     } else {
-      Swal.fire("✅ Deleted!", "Pet deleted successfully!", "success");
-      setPets((prev) => prev.filter((pet) => pet.id !== id));
+      Swal.fire("Deleted", "Pet removed", "success");
+      fetchPets();
     }
   };
 
-  const handleViewDetails = (pet) => setSelectedPet(pet);
-  const closeModal = () => setSelectedPet(null);
-
-  const handleEdit = (pet) => {
+  const openEdit = (pet: any) => {
     setEditPet(pet);
     setFormData({
       pet_name: pet.pet_name,
       pet_category: pet.pet_category,
-      location: pet.location,
       age_type: pet.age_type,
+      sex: pet.sex,
+      vaccination: pet.vaccination,
+      personality: pet.personality,
       health_status: pet.health_status,
-      care: pet.care,
       owner_contact: pet.owner_contact,
       owner_email: pet.owner_email,
-      about: pet.about,
-      price: pet.price,
+      location: pet.location,
       adoption_type: pet.adoption_type,
+      price: pet.price,
+      about: pet.about,
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleUpdate = async (e) => {
+  const handleUpdate = async (e: any) => {
     e.preventDefault();
-    try {
-      const { error } = await supabase
-        .from("pets")
-        .update(formData)
-        .eq("id", editPet.id);
 
-      if (error) throw error;
-      Swal.fire("✅ Success!", "Pet updated successfully!", "success");
+    const { error } = await supabase
+      .from("pets")
+      .update({
+        ...formData,
+        price:
+          formData.adoption_type === "Paid" ? Number(formData.price) : null,
+      })
+      .eq("id", editPet.id);
+
+    if (error) {
+      Swal.fire("Error", error.message, "error");
+    } else {
+      Swal.fire("Updated", "Pet updated successfully", "success");
       setEditPet(null);
       fetchPets();
-    } catch (err) {
-      Swal.fire("❌ Error updating pet", err.message, "error");
     }
   };
 
+  /* ================= UI ================= */
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-6">
-      <h1 className="text-4xl font-bold text-center text-pink-600 mb-10 drop-shadow-sm">
-        🐾 Pet Management Dashboard
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-8">
+      <h1 className="text-4xl font-bold text-center text-pink-600 mb-10">
+        🐾 Manage Pets
       </h1>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="animate-spin text-pink-500 w-10 h-10" />
-        </div>
-      ) : pets.length === 0 ? (
-        <div className="text-center text-gray-500 text-lg">
-          No pets found 😿
-        </div>
+        <p className="text-center">Loading...</p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {pets.map((pet) => (
             <motion.div
               key={pet.id}
               whileHover={{ scale: 1.03 }}
-              className="bg-white shadow-lg rounded-2xl overflow-hidden border border-pink-100 hover:shadow-2xl transition-all duration-300"
+              className="bg-white rounded-3xl shadow-xl overflow-hidden"
             >
-              <div className="relative">
-                <img
-                  src={pet.main_image}
-                  alt={pet.pet_name}
-                  className="w-full h-56 object-cover"
-                />
-                <div className="absolute top-3 right-3 flex gap-2">
-                  <button
-                    onClick={() => handleEdit(pet)}
-                    className="bg-white/90 hover:bg-blue-100 p-2 rounded-full transition"
-                  >
-                    <Edit3 className="w-4 h-4 text-blue-600" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(pet.id)}
-                    className="bg-white/90 hover:bg-red-100 p-2 rounded-full transition"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                  </button>
-                </div>
-              </div>
+              <img src={pet.main_image} className="h-56 w-full object-cover" />
 
               <div className="p-5">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {pet.pet_name}
-                </h2>
-                <div className="flex items-center text-sm text-gray-500 mb-3">
-                  <MapPin className="w-4 h-4 mr-1 text-pink-400" />
-                  {pet.location || "Unknown"}
-                </div>
+                <h2 className="text-xl font-semibold">{pet.pet_name}</h2>
+                <p className="flex items-center text-sm text-gray-500 mt-1">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {pet.location}
+                </p>
 
-                <div className="flex justify-between items-center mb-3">
-                  <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-medium">
+                <div className="flex justify-between mt-3">
+                  <span className="px-3 py-1 text-xs rounded-full bg-pink-100 text-pink-600">
                     {pet.pet_category}
                   </span>
-                  {pet.adoption_type === "Prize" ? (
-                    <span className="text-sm text-gray-700 font-semibold flex items-center gap-1">
-                      <IndianRupee className="w-4 h-4 text-green-500" />
+
+                  {pet.adoption_type === "Paid" ? (
+                    <span className="flex items-center font-semibold text-gray-700">
+                      <IndianRupee className="w-4 h-4" />
                       {pet.price}
                     </span>
                   ) : (
-                    <span className="text-sm text-green-600 font-semibold">
-                      Free
-                    </span>
+                    <span className="text-green-600 font-semibold">Free</span>
                   )}
                 </div>
 
-                <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                  {pet.about || "No description available."}
-                </p>
-
-                <button
-                  onClick={() => handleViewDetails(pet)}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition duration-300"
-                >
-                  <Heart className="w-4 h-4" />
-                  View Details
-                </button>
+                <div className="flex gap-3 mt-5">
+                  <IconBtn onClick={() => openEdit(pet)}>
+                    <Edit3 className="w-4 h-4 text-blue-600" />
+                  </IconBtn>
+                  <IconBtn onClick={() => handleDelete(pet.id)}>
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </IconBtn>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* 🐶 View Details Modal */}
-      <AnimatePresence>
-        {selectedPet && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={closeModal}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden relative"
-            >
-              <button
-                onClick={closeModal}
-                className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
+      {/* ================= EDIT MODAL ================= */}
 
-              <img
-                src={selectedPet.main_image}
-                alt={selectedPet.pet_name}
-                className="w-full h-64 object-cover"
-              />
-
-              <div className="p-6 space-y-3">
-                <h2 className="text-2xl font-bold text-pink-600 mb-2">
-                  {selectedPet.pet_name}
-                </h2>
-                <p className="text-gray-600">
-                  {selectedPet.about || "No details available."}
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 text-gray-700 text-sm">
-                  <p>
-                    <b>Category:</b> {selectedPet.pet_category}
-                  </p>
-                  <p>
-                    <b>Location:</b> {selectedPet.location}
-                  </p>
-                  <p>
-                    <b>Age:</b> {selectedPet.age_type}
-                  </p>
-                  <p>
-                    <b>Health:</b> {selectedPet.health_status}
-                  </p>
-                  <p>
-                    <b>Care:</b> {selectedPet.care}
-                  </p>
-                  <p>
-                    <b>Contact:</b> {selectedPet.owner_contact}
-                  </p>
-                  <p>
-                    <b>Email:</b> {selectedPet.owner_email}
-                  </p>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <button
-                    onClick={closeModal}
-                    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ✏️ Edit Pet Modal */}
       <AnimatePresence>
         {editPet && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setEditPet(null)}
-          >
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto"
-            >
-              <button
-                onClick={() => setEditPet(null)}
-                className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-
-              <h2 className="text-2xl font-bold text-pink-600 mb-5 text-center">
-                ✏️ Edit Pet
-              </h2>
-
-              <form onSubmit={handleUpdate} className="space-y-4 pb-6">
-                {[
-                  "pet_name",
-                  "pet_category",
-                  "location",
-                  "age_type",
-                  "health_status",
-                  "care",
-                  "owner_contact",
-                  "owner_email",
-                  "price",
-                  "adoption_type",
-                ].map((field) => (
-                  <div key={field}>
-                    <label className="text-gray-600 text-sm font-medium block mb-1">
-                      {field.replace("_", " ").toUpperCase()}
-                    </label>
-                    <input
-                      type="text"
-                      name={field}
-                      value={formData[field] || ""}
-                      onChange={handleChange}
-                      className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none"
-                    />
-                  </div>
-                ))}
-
-                <div>
-                  <label className="text-gray-600 text-sm font-medium block mb-1">
-                    ABOUT
-                  </label>
-                  <textarea
-                    name="about"
-                    value={formData.about || ""}
+          <Modal onClose={() => setEditPet(null)}>
+            <form onSubmit={handleUpdate} className="space-y-10">
+              <Section title="🐾 Basic Info">
+                <Grid>
+                  <Input
+                    label="Pet Name"
+                    name="pet_name"
+                    value={formData.pet_name}
                     onChange={handleChange}
-                    rows="3"
-                    className="w-full border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none"
                   />
-                </div>
+                  <Select
+                    label="Category"
+                    name="pet_category"
+                    options={CATEGORY}
+                    value={formData.pet_category}
+                    onChange={handleChange}
+                  />
+                  <Select
+                    label="Age"
+                    name="age_type"
+                    options={AGE}
+                    value={formData.age_type}
+                    onChange={handleChange}
+                  />
+                  <Select
+                    label="Gender"
+                    name="sex"
+                    options={SEX}
+                    value={formData.sex}
+                    onChange={handleChange}
+                  />
+                </Grid>
+              </Section>
 
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditPet(null)}
-                    className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
-                  >
-                    Update
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
+              <Section title="💉 Health">
+                <Grid>
+                  <Select
+                    label="Vaccination"
+                    name="vaccination"
+                    options={VACCINATION}
+                    value={formData.vaccination}
+                    onChange={handleChange}
+                  />
+                  <Select
+                    label="Personality"
+                    name="personality"
+                    options={PERSONALITY}
+                    value={formData.personality}
+                    onChange={handleChange}
+                  />
+                  <Select
+                    label="Health Status"
+                    name="health_status"
+                    options={HEALTH}
+                    value={formData.health_status}
+                    onChange={handleChange}
+                  />
+                </Grid>
+              </Section>
+
+              <Section title="👤 Owner Details">
+                <Grid>
+                  <Input
+                    label="Contact"
+                    name="owner_contact"
+                    value={formData.owner_contact}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Email"
+                    name="owner_email"
+                    value={formData.owner_email}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                  />
+                </Grid>
+              </Section>
+
+              <Section title="💰 Adoption">
+                <Grid>
+                  <Select
+                    label="Adoption Type"
+                    name="adoption_type"
+                    options={ADOPTION}
+                    value={formData.adoption_type}
+                    onChange={handleChange}
+                  />
+                  {formData.adoption_type === "Paid" && (
+                    <Input
+                      label="Price"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                    />
+                  )}
+                </Grid>
+              </Section>
+
+              <Section title="📝 About">
+                <textarea
+                  name="about"
+                  value={formData.about || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border px-4 py-3 min-h-[120px] focus:ring-2 focus:ring-pink-400 outline-none"
+                />
+              </Section>
+
+              <div className="flex justify-end gap-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setEditPet(null)}
+                  className="px-6 py-3 rounded-full border"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </Modal>
         )}
       </AnimatePresence>
     </div>
   );
-};
+}
 
-export default ListPets;
+/* ================= UI COMPONENTS ================= */
+
+const Modal = ({ children, onClose }: any) => (
+  <motion.div
+    className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    onClick={onClose}
+  >
+    <motion.div
+      onClick={(e) => e.stopPropagation()}
+      initial={{ scale: 0.9, y: 40 }}
+      animate={{ scale: 1, y: 0 }}
+      exit={{ scale: 0.9, y: 40 }}
+      className="bg-white rounded-[32px] w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+    >
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 flex justify-between items-center">
+        <h2 className="text-white text-2xl font-bold">✏️ Edit Pet</h2>
+        <button onClick={onClose} className="text-white">
+          <X />
+        </button>
+      </div>
+      <div className="p-8">{children}</div>
+    </motion.div>
+  </motion.div>
+);
+
+const Section = ({ title, children }: any) => (
+  <div>
+    <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="bg-gray-50 rounded-3xl p-6">{children}</div>
+  </div>
+);
+
+const Grid = ({ children }: any) => (
+  <div className="grid md:grid-cols-2 gap-6">{children}</div>
+);
+
+const Input = ({ label, ...props }: any) => (
+  <div>
+    <label className="text-sm font-medium">{label}</label>
+    <input
+      {...props}
+      className="w-full mt-1 rounded-2xl border px-4 py-3 focus:ring-2 focus:ring-pink-400 outline-none"
+    />
+  </div>
+);
+
+const Select = ({ label, options, ...props }: any) => (
+  <div>
+    <label className="text-sm font-medium">{label}</label>
+    <select
+      {...props}
+      className="w-full mt-1 rounded-2xl border px-4 py-3 focus:ring-2 focus:ring-pink-400 outline-none"
+    >
+      <option value="">Select</option>
+      {options.map((o: string) => (
+        <option key={o}>{o}</option>
+      ))}
+    </select>
+  </div>
+);
+
+const IconBtn = ({ children, ...props }: any) => (
+  <button
+    {...props}
+    className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition"
+  >
+    {children}
+  </button>
+);

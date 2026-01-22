@@ -46,6 +46,7 @@ export function PetCard({ pet, onClick }: PetCardProps) {
         overflow-hidden
         mx-auto
         w-full sm:w-[350px]
+        mb-10
       "
     >
       {/* Image Section */}
