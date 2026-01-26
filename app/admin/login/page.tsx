@@ -1,7 +1,9 @@
 "use client";
+
 import { useState } from "react";
 import { supabase } from "@/supabace/config";
 import { useRouter } from "next/navigation";
+import type { ChangeEvent, FormEvent } from "react";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -11,22 +13,28 @@ export default function AdminLogin() {
     password: "",
   });
 
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  /* ✅ FIX: typed event */
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = async (e) => {
+  /* ✅ FIX: typed submit event */
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
     });
 
-    if (error) return setError(error.message);
+    if (error) {
+      setError(error.message);
+      return;
+    }
 
     router.push("/admin/dashboard");
   };
@@ -35,15 +43,16 @@ export default function AdminLogin() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:3000/admin/auth/callback",
+        /* ⚠ IMPORTANT: change after deploy */
+        redirectTo: process.env.NEXT_PUBLIC_SITE_URL + "/admin/auth/callback",
       },
     });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 p-4">
-      <div className="backdrop-blur-xl bg-white/20 border border-white/30 shadow-xl p-8 rounded-3xl w-full max-w-md transform transition-all duration-500 hover:scale-[1.02]">
-        <h2 className="text-4xl font-bold text-center text-white drop-shadow-sm mb-6">
+      <div className="backdrop-blur-xl bg-white/20 border border-white/30 shadow-xl p-8 rounded-3xl w-full max-w-md transition-all duration-500 hover:scale-[1.02]">
+        <h2 className="text-4xl font-bold text-center text-white mb-6">
           Admin Login
         </h2>
 
@@ -53,8 +62,8 @@ export default function AdminLogin() {
             name="email"
             placeholder="Admin Email"
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-white/60 text-gray-800 shadow-inner focus:ring-4 focus:ring-pink-500 focus:outline-none"
             required
+            className="w-full px-4 py-3 rounded-xl bg-white/60 text-gray-800 focus:ring-4 focus:ring-pink-500 outline-none"
           />
 
           <input
@@ -62,8 +71,8 @@ export default function AdminLogin() {
             name="password"
             placeholder="Password"
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-white/60 text-gray-800 shadow-inner focus:ring-4 focus:ring-purple-500 focus:outline-none"
             required
+            className="w-full px-4 py-3 rounded-xl bg-white/60 text-gray-800 focus:ring-4 focus:ring-purple-500 outline-none"
           />
 
           {error && (
@@ -74,17 +83,16 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 py-3 rounded-xl shadow-lg text-white text-lg font-semibold transition-all duration-300 hover:scale-105 hover:from-purple-600 hover:to-pink-600"
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 py-3 rounded-xl text-white font-semibold transition hover:scale-105"
           >
             Login
           </button>
         </form>
 
-        {/* Google Login Button */}
         <div className="mt-6">
           <button
             onClick={handleGoogleLogin}
-            className="w-full bg-white/90 text-gray-800 py-3 rounded-xl font-semibold shadow-md transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+            className="w-full bg-white/90 text-gray-800 py-3 rounded-xl font-semibold shadow-md flex items-center justify-center gap-2 hover:scale-105 transition"
           >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -95,7 +103,7 @@ export default function AdminLogin() {
           </button>
         </div>
 
-        <p className="text-center mt-4 text-white/90 text-sm">
+        <p className="text-center mt-4 text-white text-sm">
           Don&apos;t have an account?{" "}
           <a
             href="/admin/signup"
