@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/supabace/config";
 import Image from "next/image";
 import {
@@ -20,6 +20,7 @@ export default function AdoptionSuccessPage() {
   const [adoption, setAdoption] = useState<any>(null);
   const [pet, setPet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const emailSentRef = useRef(false);
 
   useEffect(() => {
     if (!adoptionId) return;
@@ -50,6 +51,61 @@ export default function AdoptionSuccessPage() {
 
     fetchData();
   }, [adoptionId]);
+
+  useEffect(() => {
+    if (!adoptionId || !adoption || !pet || emailSentRef.current) return;
+
+    const storageKey = `adoption-email-${adoptionId}`;
+    if (typeof window !== "undefined") {
+      const alreadySent = window.sessionStorage.getItem(storageKey);
+      if (alreadySent) {
+        emailSentRef.current = true;
+        return;
+      }
+    }
+
+    const sendEmail = async () => {
+      try {
+        emailSentRef.current = true;
+        const response = await fetch("/api/adoption/notify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            adoption: {
+              full_name: adoption.full_name,
+              email: adoption.email,
+              phone: adoption.phone,
+              state: adoption.state,
+              location: adoption.location,
+              landmark: adoption.landmark,
+            },
+            pet: {
+              pet_name: pet.pet_name,
+              pet_category: pet.pet_category,
+              age_type: pet.age_type,
+              sex: pet.sex,
+              health_status: pet.health_status,
+              vaccination: pet.vaccination,
+              location: pet.location,
+              owner_name: pet.owner_name,
+              owner_email: pet.owner_email,
+              owner_contact: pet.owner_contact,
+            },
+          }),
+        });
+
+        if (response.ok && typeof window !== "undefined") {
+          window.sessionStorage.setItem(storageKey, "true");
+        }
+      } catch (error) {
+        console.error("Failed to send adoption email", error);
+      }
+    };
+
+    sendEmail();
+  }, [adoption, adoptionId, pet]);
 
   if (loading) {
     return (
