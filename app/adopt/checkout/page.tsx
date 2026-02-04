@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "../../../supabace/config"; // ✅ check spelling
+import { supabase } from "../../../supabace/config";
 
 type FormState = {
   full_name: string;
