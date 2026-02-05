@@ -1,53 +1,32 @@
 "use client";
 
-import React, { useState, CSSProperties } from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Dog, Cat, Bird, Rabbit } from "lucide-react";
+import { Pet } from "@/types/pet";
 
-/* --------------------------------------------------
-   TYPES
--------------------------------------------------- */
-
-export interface Pet {
-  id: string;
-  pet_name?: string;
-  main_image?: string;
-  age_type?: string;
-  location?: string;
-  pet_category?: string;
-  personality?: string;
-  vacsination?: string;
-}
-
-interface PetCardProps {
+interface PetCardProps extends React.HTMLAttributes<HTMLDivElement> {
   pet: Pet;
-  onClick?: () => void;
-  className?: string;
-  style?: CSSProperties;
 }
 
-/* --------------------------------------------------
-   COMPONENT
--------------------------------------------------- */
-
-export function PetCard({ pet, onClick, className = "", style }: PetCardProps) {
+export function PetCard({ pet, className, style, onClick }: PetCardProps) {
   const [imageError, setImageError] = useState(false);
 
-  const mainImage =
-    pet?.main_image && !imageError ? pet.main_image : "/placeholder-pet.jpg";
+  const image =
+    pet.main_image && !imageError ? pet.main_image : "/placeholder-pet.jpg";
 
-  const personalityList = pet?.personality
-    ? pet.personality.split(",").map((p) => p.trim())
-    : [];
-
-  const categoryIcons: Record<string, React.ElementType> = {
+  const icons: Record<string, React.ElementType> = {
     dog: Dog,
     cat: Cat,
     bird: Bird,
     rabbit: Rabbit,
   };
 
-  const Icon = categoryIcons[pet?.pet_category?.toLowerCase() ?? ""] || Dog;
+  const Icon = icons[pet.pet_category?.toLowerCase() ?? ""] || Dog;
+
+  const personalityList = pet.personality
+    ? pet.personality.split(",").map((p) => p.trim())
+    : [];
 
   return (
     <div
@@ -62,89 +41,63 @@ export function PetCard({ pet, onClick, className = "", style }: PetCardProps) {
         hover:scale-[1.04]
         cursor-pointer
         overflow-hidden
-        mx-auto
-        w-full sm:w-[350px]
-        mb-10
-        ${className}
+        ${className ?? ""}
       `}
     >
       {/* IMAGE */}
-      <div className="relative w-full h-64 overflow-hidden group">
+      <div className="relative h-64 w-full overflow-hidden group">
         <img
-          src={mainImage}
-          alt={pet?.pet_name || "Pet"}
-          className="
-            w-full h-full object-cover
-            transition-transform duration-1000
-            group-hover:scale-105
-          "
+          src={image}
+          alt={pet.pet_name}
           onError={() => setImageError(true)}
+          className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
         />
 
-        {/* Favorite */}
-        <div className="absolute top-3 right-3 bg-white/80 p-2 rounded-full shadow hover:bg-red-500 hover:text-white transition">
+        <div className="absolute top-3 right-3 bg-white/80 p-2 rounded-full">
           <Heart size={18} />
         </div>
 
-        {/* Category */}
-        <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-full shadow-md">
-          <Icon size={20} />
+        <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-full">
+          <Icon size={18} />
         </div>
 
-        {/* Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 text-white">
-          <h3 className="text-xl font-semibold truncate">
-            {pet?.pet_name || "Unknown Pet"}
-          </h3>
-          <p className="text-sm opacity-90 capitalize">
-            {pet?.age_type || "Age not specified"}
-          </p>
+        <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/60 to-transparent p-4 text-white">
+          <h3 className="text-lg font-semibold">{pet.pet_name}</h3>
+          <p className="text-sm capitalize">{pet.age_type}</p>
         </div>
       </div>
 
       {/* DETAILS */}
       <div className="p-4">
-        <div className="flex items-center justify-between text-gray-700 text-sm">
-          <div className="flex items-center">
-            <MapPin size={16} className="mr-1 text-blue-600" />
-            {pet?.location || "Unknown"}
-          </div>
+        <div className="flex justify-between text-sm text-gray-700">
+          <span className="flex items-center">
+            <MapPin size={14} className="mr-1" />
+            {pet.location || "Unknown"}
+          </span>
 
-          <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs capitalize">
-            <Icon size={14} />
-            {pet?.pet_category || "Pet"}
-          </div>
+          <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full capitalize">
+            <Icon size={12} />
+            {pet.pet_category}
+          </span>
         </div>
 
-        {/* Personality */}
         {personalityList.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
-            {personalityList.slice(0, 3).map((trait) => (
-              <Badge
-                key={trait}
-                className="text-[10px] px-2 py-1 bg-blue-100 text-blue-700 rounded-full"
-              >
-                {trait}
+            {personalityList.slice(0, 3).map((p) => (
+              <Badge key={p} className="text-[10px] bg-blue-100 text-blue-700">
+                {p}
               </Badge>
             ))}
           </div>
         )}
 
-        {/* Vaccination */}
-        {pet?.vacsination && (
+        {pet.vacsination && (
           <div className="mt-3">
-            <Badge className="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-green-400 to-emerald-600 text-white">
+            <Badge className="bg-green-500 text-white text-xs">
               {pet.vacsination}
             </Badge>
           </div>
         )}
-
-        <button
-          type="button"
-          className="mt-5 w-full py-2 text-white font-semibold rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 shadow-md hover:shadow-xl transition"
-        >
-          View Details
-        </button>
       </div>
     </div>
   );
