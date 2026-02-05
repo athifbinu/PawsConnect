@@ -354,7 +354,7 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
               By submitting this application, you agree to be contacted by{" "}
-              {pet.shelterInfo.name}
+              {pet.shelterInfo?.name}
             </p>
           </div>
         </form>
