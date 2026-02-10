@@ -90,12 +90,12 @@ export function PetCard({ pet, className, style, onClick }: PetCardProps) {
             ))}
           </div>
         )}
-
-        {pet.vacsination && (
+        {/* Vaccination Badge */}
+        {pet.vaccination && (
           <div className="mt-3">
-            <Badge className="bg-green-500 text-white text-xs">
-              {pet.vacsination}
-            </Badge>
+            <span className="inline-block bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+              Vaccinated
+            </span>
           </div>
         )}
       </div>

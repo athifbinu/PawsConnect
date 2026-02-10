@@ -1,5 +1,6 @@
 // 🐾 Pet interface
 export interface Pet {
+  vaccination: any;
   name: ReactNode;
   type: ReactNode;
   adoptionFee: ReactNode;
