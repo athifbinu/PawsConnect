@@ -30,7 +30,7 @@ export function PetCard({ pet, onClick, className, style }: PetCardProps) {
 
       {pet.vaccination && (
         <span className="inline-block mt-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-          Vaccinated
+          Vacsination
         </span>
       )}
     </div>
