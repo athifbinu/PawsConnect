@@ -115,7 +115,7 @@ export function TestimonialsSection() {
 
                 {/* Testimonial Text */}
                 <p className="text-gray-700 mb-6 leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
-                  "{testimonial.text}"
+                  &quot;{testimonial.text}&quot;
                 </p>
 
                 {/* User Info */}

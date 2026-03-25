@@ -49,3 +49,10 @@ export interface Pet {
   created_at?: string;
   postedDate?: string;
 }
+
+export interface FilterState {
+  type: string;
+  age: string;
+  size: string;
+  location: string;
+}

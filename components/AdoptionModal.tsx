@@ -68,7 +68,7 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
               Application Submitted!
             </h3>
             <p className="text-gray-600 mb-6">
-              Thank you for your interest in adopting {pet.name} The shelter
+              Thank you for your interest in adopting {pet.pet_name} The shelter
               will review your application and contact you within 1-3 business
               days.
             </p>
@@ -90,11 +90,11 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
             <Heart className="h-6 w-6 text-orange-500 fill-orange-500" />
-            Adopt {pet.name}
+            Adopt {pet.pet_name}
           </DialogTitle>
           <p className="text-gray-600">
             Complete this application to start the adoption process for this
-            wonderful {pet.type}.
+            wonderful {pet.pet_category}.
           </p>
         </DialogHeader>
 
@@ -328,7 +328,7 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
                 I agree to the terms and conditions of adoption, including a
                 home visit, reference checks, and the commitment to provide
                 proper care, veterinary treatment, and a loving home for this
-                pet. I understand that the adoption fee of ${pet.adoptionFee} is
+                pet. I understand that the adoption fee of ₹{pet.price || 0} is
                 required upon approval. *
               </Label>
             </div>
@@ -354,7 +354,7 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
               By submitting this application, you agree to be contacted by{" "}
-              {pet.shelterInfo?.name}
+              {pet.owner_name || 'the owner'}
             </p>
           </div>
         </form>

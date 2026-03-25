@@ -46,15 +46,15 @@ const careLevelMap: Record<string, string> = {
    COMPONENT
 -------------------------------------------------- */
 
-export function PetDetailModal({ pet, isOpen, onClose }: any) {
+export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
   const images = [
     pet.main_image,
-    pet.sub_image_1,
-    pet.sub_image_2,
-    pet.sub_image_3,
+    pet.sub_images?.[0],
+    pet.sub_images?.[1],
+    pet.sub_images?.[2],
   ].filter(Boolean);
 
   const personalityArray =
@@ -241,7 +241,7 @@ export function PetDetailModal({ pet, isOpen, onClose }: any) {
 
               <Button
                 onClick={() => {
-                  window.location.href = `/adopt/checkout?petId=${pet.id}`;
+                  onAdopt(pet);
                 }}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-lg"
               >
