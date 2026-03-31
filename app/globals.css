@@ -679,3 +679,9 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Fix for Razorpay modal inside Radix UI Dialog */
+.razorpay-container {
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+}

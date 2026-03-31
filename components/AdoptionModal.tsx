@@ -1,6 +1,8 @@
 "use client";
 
 import { Pet } from "@/types/pet";
+import Script from "next/script";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, CheckCircle } from "lucide-react";
+import { Heart, CheckCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface AdoptionModalProps {
@@ -29,7 +31,9 @@ interface AdoptionModalProps {
 }
 
 export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
+  const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -48,14 +52,98 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
     agreeTerms: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would submit to a backend
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      onClose();
-    }, 3000);
+    setIsProcessing(true);
+
+    try {
+      const orderRes = await fetch("/api/create-razorpay-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: pet.price || 500 }),
+      });
+      const orderData = await orderRes.json();
+
+      if (!orderData.id) throw new Error("Could not create Razorpay order");
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TYpo9u8R4g2G1C",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "PawsConnect",
+        description: `Adoption Application for ${pet.pet_name}`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          setSubmitted(true);
+          try {
+            const submitRes = await fetch("/api/submit-adoption", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                pet_id: pet.id,
+                full_name: `${formData.firstName} ${formData.lastName}`,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                city: formData.city,
+                state: formData.state,
+                zipCode: formData.zipCode,
+                housingType: formData.housingType,
+                ownRent: formData.ownRent,
+                hasYard: formData.hasYard,
+                hasOtherPets: formData.hasOtherPets,
+                petExperience: formData.petExperience,
+                whyAdopt: formData.whyAdopt,
+                payment_id: response.razorpay_payment_id,
+              }),
+            });
+            const submitData = await submitRes.json();
+
+            if (submitData.adoptionId) {
+              await fetch("/api/send-adoption-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adoptionId: submitData.adoptionId }),
+              });
+
+              router.push(`/adoption-success?id=${submitData.adoptionId}`);
+              onClose();
+            } else {
+              alert("Payment successful but failed to save record.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Payment successful but an error occurred saving your record.");
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#f97316", // orange-500
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        alert("Payment failed: " + response.error.description);
+        setIsProcessing(false);
+      });
+      rzp.open();
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+      setIsProcessing(false);
+    }
   };
 
   if (submitted) {
@@ -65,12 +153,11 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
           <div className="text-center py-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Application Submitted!
+              Processing Application...
             </h3>
-            <p className="text-gray-600 mb-6">
-              Thank you for your interest in adopting {pet.pet_name} The shelter
-              will review your application and contact you within 1-3 business
-              days.
+            <p className="text-gray-600 mb-6 flex justify-center items-center gap-2">
+              <Loader2 className="animate-spin h-5 w-5" />
+              Finalizing your adoption with the shelter.
             </p>
             <Button
               onClick={onClose}
@@ -85,8 +172,15 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Dialog open={isOpen} onOpenChange={onClose} modal={!isProcessing}>
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => {
+          if (isProcessing) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
             <Heart className="h-6 w-6 text-orange-500 fill-orange-500" />
@@ -347,9 +441,16 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
               </Button>
               <Button
                 type="submit"
+                disabled={isProcessing}
                 className="flex-1 bg-orange-500 hover:bg-orange-600"
               >
-                Submit Application
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" /> Processing...
+                  </>
+                ) : (
+                  "Proceed to Pay & Submit"
+                )}
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
@@ -360,5 +461,6 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
