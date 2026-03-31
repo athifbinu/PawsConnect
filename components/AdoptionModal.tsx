@@ -105,6 +105,17 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ adoptionId: submitData.adoptionId }),
               });
+              
+              // Send WhatsApp notification
+              try {
+                await fetch("/api/send-adoption-whatsapp", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ adoptionId: submitData.adoptionId }),
+                });
+              } catch (e) {
+                console.error("Failed to send WhatsApp message", e);
+              }
 
               router.push(`/adoption-success?id=${submitData.adoptionId}`);
               onClose();
@@ -176,7 +187,7 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <Dialog open={isOpen} onOpenChange={onClose} modal={!isProcessing}>
       <DialogContent 
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6"
         onInteractOutside={(e) => {
           if (isProcessing) e.preventDefault();
         }}

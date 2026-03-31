@@ -64,11 +64,11 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <DialogTitle className="text-3xl font-bold">
+              <DialogTitle className="text-2xl sm:text-3xl font-bold">
                 {pet.pet_name}
               </DialogTitle>
               <p className="text-gray-600 text-lg">{pet.pet_category}</p>
@@ -87,7 +87,7 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
           </div>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-2 gap-10 mt-6">
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-10 mt-6">
           {/* --------------------------------------------------
               IMAGE GALLERY
           -------------------------------------------------- */}
@@ -98,7 +98,7 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
             />
 
             {images.length > 1 && (
-              <div className="flex gap-3 mt-4 overflow-x-auto">
+              <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
                 {images.map((img: string, i: number) => (
                   <button
                     key={i}
@@ -182,7 +182,7 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
             <Separator />
 
             {/* ABOUT */}
-            <div className="bg-gray-50 p-5 rounded-xl border">
+            <div className="bg-gray-50 p-4 sm:p-5 rounded-xl border">
               <h3 className="font-semibold text-lg mb-2">
                 About {pet.pet_name}
               </h3>
@@ -190,7 +190,7 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
             </div>
 
             {/* ADOPTION INCLUDES */}
-            <div className="bg-white p-5 rounded-xl border shadow-sm">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border shadow-sm">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <PawPrint className="h-5 w-5 text-orange-500" />
                 Adoption Includes
@@ -207,7 +207,7 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
             </div>
 
             {/* IDEAL HOME */}
-            <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
+            <div className="bg-blue-50 p-4 sm:p-5 rounded-xl border border-blue-200">
               <h3 className="font-semibold text-lg mb-3 text-blue-800">
                 Ideal Home
               </h3>
@@ -228,8 +228,8 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
             </div>
 
             {/* CTA */}
-            <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
-              <div className="flex justify-between items-center mb-4">
+            <div className="bg-orange-50 p-4 sm:p-6 rounded-xl border border-orange-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-600">Adoption Fee</p>
                   <p className="text-3xl font-bold text-orange-600">
