@@ -106,8 +106,8 @@ export default function ListPets() {
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-8">
-      <h1 className="text-4xl font-bold text-center text-pink-600 mb-10">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4 sm:p-6 lg:p-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center text-pink-600 mb-8 sm:mb-10">
         🐾 Manage Pets
       </h1>
 
@@ -315,21 +315,21 @@ const Modal = ({ children, onClose }: any) => (
       exit={{ scale: 0.9, y: 40 }}
       className="bg-white rounded-[32px] w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
     >
-      <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 flex justify-between items-center">
-        <h2 className="text-white text-2xl font-bold">✏️ Edit Pet</h2>
-        <button onClick={onClose} className="text-white">
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-4 sm:p-6 flex justify-between items-center rounded-t-[32px]">
+        <h2 className="text-white text-xl sm:text-2xl font-bold">✏️ Edit Pet</h2>
+        <button onClick={onClose} className="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
           <X />
         </button>
       </div>
-      <div className="p-8">{children}</div>
+      <div className="p-4 sm:p-6 lg:p-8">{children}</div>
     </motion.div>
   </motion.div>
 );
 
 const Section = ({ title, children }: any) => (
-  <div>
-    <h3 className="text-lg font-semibold mb-4">{title}</h3>
-    <div className="bg-gray-50 rounded-3xl p-6">{children}</div>
+  <div className="mt-6">
+    <h3 className="text-lg font-semibold mb-3">{title}</h3>
+    <div className="bg-gray-50 rounded-xl sm:rounded-3xl p-4 sm:p-6">{children}</div>
   </div>
 );
 

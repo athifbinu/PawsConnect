@@ -55,8 +55,8 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-gray-800">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
         Welcome, {user.email}
       </h1>
 

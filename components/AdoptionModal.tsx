@@ -100,22 +100,19 @@ export function AdoptionModal({ pet, isOpen, onClose }: AdoptionModalProps) {
             const submitData = await submitRes.json();
 
             if (submitData.adoptionId) {
-              await fetch("/api/send-adoption-email", {
+              // Send email and WhatsApp notifications in the background
+              // without awaiting, to significantly improve the final loading speed.
+              fetch("/api/send-adoption-email", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ adoptionId: submitData.adoptionId }),
-              });
+              }).catch((e) => console.error("Failed to send email", e));
               
-              // Send WhatsApp notification
-              try {
-                await fetch("/api/send-adoption-whatsapp", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ adoptionId: submitData.adoptionId }),
-                });
-              } catch (e) {
-                console.error("Failed to send WhatsApp message", e);
-              }
+              fetch("/api/send-adoption-whatsapp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adoptionId: submitData.adoptionId }),
+              }).catch((e) => console.error("Failed to send WhatsApp message", e));
 
               router.push(`/adoption-success?id=${submitData.adoptionId}`);
               onClose();

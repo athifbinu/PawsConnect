@@ -217,16 +217,16 @@ export default function AddPet() {
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-5xl mx-auto px-4 py-10"
+      className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8"
     >
-      <h1 className="text-4xl font-bold mb-8 flex items-center gap-3">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 flex items-center gap-3">
         <PawPrint className="text-indigo-600" />
         Add New Pet
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-3xl shadow-xl p-8 grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6"
       >
         <Input
           icon={<PawPrint />}

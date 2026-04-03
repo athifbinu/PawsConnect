@@ -91,22 +91,22 @@ export function PetDetailModal({ pet, isOpen, onClose, onAdopt }: any) {
           {/* --------------------------------------------------
               IMAGE GALLERY
           -------------------------------------------------- */}
-          <div>
+          <div className="w-full overflow-hidden">
             <img
               src={images[currentImageIndex] || "/placeholder-pet.jpg"}
-              className="w-full h-80 object-cover rounded-xl"
+              className="w-full h-56 sm:h-72 md:h-80 lg:h-96 object-cover rounded-xl transition-all duration-300"
             />
 
             {images.length > 1 && (
-              <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+              <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 scrollbar-hide">
                 {images.map((img: string, i: number) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImageIndex(i)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                    className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                       i === currentImageIndex
-                        ? "border-orange-500"
-                        : "border-gray-200"
+                        ? "border-orange-500 shadow-sm"
+                        : "border-gray-200 opacity-70 hover:opacity-100"
                     }`}
                   >
                     <img src={img} className="w-full h-full object-cover" />
