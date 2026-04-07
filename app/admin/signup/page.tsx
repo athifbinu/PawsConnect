@@ -23,7 +23,7 @@ export default function AdminSignup() {
     setError("");
     setIsLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
@@ -39,7 +39,13 @@ export default function AdminSignup() {
       return;
     }
 
-    router.push("/admin/login");
+    if (data.session) {
+      router.push("/admin/dashboard");
+    } else {
+      setError("Account created! Please check your email to verify your account before logging in. If you are the owner, you can disable Email Confirmations in Supabase.");
+      setIsLoading(false);
+      setFormData({ name: "", email: "", password: "" });
+    }
   };
 
   const handleGoogleSignup = async () => {
