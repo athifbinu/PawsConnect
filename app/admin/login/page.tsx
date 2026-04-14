@@ -29,7 +29,11 @@ export default function AdminLogin() {
     });
 
     if (error) {
-      setError(error.message);
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setError("Action Required: Please go to your Supabase Dashboard -> Authentication -> Providers -> Email -> and TURN OFF 'Confirm email', then try logging in.");
+      } else {
+        setError(error.message);
+      }
       setIsLoading(false);
       return;
     }

@@ -34,7 +34,11 @@ export default function AdminSignup() {
     });
 
     if (error) {
-      setError(error.message);
+      if (error.message.toLowerCase().includes("rate limit")) {
+        setError("Supabase Rate Limit Exceeded: You've tried signing up too many times recently. Please test with a fake email address (like test1@example.com) or increase your rate limits in Supabase Dashboard -> Authentication -> Rate Limits.");
+      } else {
+        setError(error.message);
+      }
       setIsLoading(false);
       return;
     }
@@ -42,9 +46,26 @@ export default function AdminSignup() {
     if (data.session) {
       router.push("/admin/dashboard");
     } else {
-      setError("Account created! Please check your email to verify your account before logging in. If you are the owner, you can disable Email Confirmations in Supabase.");
-      setIsLoading(false);
-      setFormData({ name: "", email: "", password: "" });
+      // Try to log in immediately just in case
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) {
+        if (signInError.message.toLowerCase().includes("email not confirmed")) {
+          setError("Action Required: Please go to your Supabase Dashboard -> Authentication -> Providers -> Email -> and TURN OFF 'Confirm email', then try logging in.");
+        } else {
+          setError(signInError.message);
+        }
+        setIsLoading(false);
+        setFormData({ name: "", email: "", password: "" });
+      } else if (signInData.session) {
+        router.push("/admin/dashboard");
+      } else {
+        setError("Account created. Please login manually.");
+        setIsLoading(false);
+      }
     }
   };
 
